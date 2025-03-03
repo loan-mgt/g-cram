@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: my_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./front:/usr/share/nginx/html:ro             # Mount /front directory as web root
+    restart: always
+    configs:
+      - source: nginx_config
+        target: /etc/nginx/nginx.conf
+    deploy:
+      replicas: 1
+
+configs:
+  nginx_config:
+    file: ./nginx.conf
+
