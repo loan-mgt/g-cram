@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Google Photos Video Viewer</title>
-    <script src="main.js"></script>
     <link rel="stylesheet" href="/styles/main.css">
 </head>
 
@@ -16,8 +15,15 @@
     <div id="login-button">
         <button onclick="oauthSignIn()">Login with Google</button>
     </div>
+    
 
-    <a href="/">logout</a>
+    <a id="logout" href="/">logout</a>
+    <a id="picker" target="_blank">picker</a>
+    <button id="picker2">picker</button>
+
+    <div id="media-holder">
+
+    </div>
 </body>
-
+<script src="/public/main.js"></script>
 </html>
