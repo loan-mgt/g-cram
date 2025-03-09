@@ -3,31 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Google Photos Video Viewer</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-
-        #login-button {
-            margin: 20px;
-        }
-
-        #video-list {
-            margin-top: 20px;
-        }
-
-        .video-item {
-            margin-bottom: 10px;
-        }
-
-        iframe {
-            width: 100%;
-            max-width: 600px;
-            height: 315px;
-        }
-    </style>
+    <script src="main.js"></script>
+    <link rel="stylesheet" href="/styles/main.css">
 </head>
 
 <body>
@@ -39,78 +18,6 @@
     </div>
 
     <a href="/">logout</a>
-
-    <script>
-        const urlFragment = window.location.hash;
-        let accessToken;
-
-        if (urlFragment) {
-            if (urlFragment.includes("access_token")) {
-                accessToken = urlFragment.split("access_token=")[1].split("&")[0];
-                console.log("Access Token:", accessToken);
-                document.querySelector('#login-button').style.display = 'none';
-
-                disaplyContent();
-            } else if (urlFragment.includes("error")) {
-                const error = urlFragment.split("error=")[1].split("&")[0];
-                console.error("OAuth 2.0 flow error:", error);
-            }
-        }
-
-
-
-        function oauthSignIn() {
-            // Google's OAuth 2.0 endpoint for requesting an access token
-            var oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth';
-
-            // Create <form> element to submit parameters to OAuth 2.0 endpoint.
-            var form = document.createElement('form');
-            form.setAttribute('method', 'GET'); // Send as a GET request.
-            form.setAttribute('action', oauth2Endpoint);
-
-            // Parameters to pass to OAuth 2.0 endpoint.
-            var params = {
-                'client_id': '949757780668-mptrdgdc2hfvdu5bul8t7boog88nbd07.apps.googleusercontent.com',
-                'redirect_uri': 'https://literate-space-invention-w9xw4xg5p6pc5x97-8080.app.github.dev/',
-                'response_type': 'token',
-                'scope': 'https://www.googleapis.com/auth/photoslibrary.readonly https://www.googleapis.com/auth/photospicker.mediaitems.readonly',
-                'include_granted_scopes': 'true',
-                'state': 'pass-through value'
-            };
-
-            // Add form parameters as hidden input values.
-            for (var p in params) {
-                var input = document.createElement('input');
-                input.setAttribute('type', 'hidden');
-                input.setAttribute('name', p);
-                input.setAttribute('value', params[p]);
-                form.appendChild(input);
-            }
-
-            // Add form to page and submit it to open the OAuth 2.0 endpoint.
-            document.body.appendChild(form);
-            form.submit();
-        }
-
-        function disaplyContent() {
-            const base = 'https://photospicker.googleapis.com';
-
-            fetch(base + '/v1/sessions', {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + accessToken
-                },
-                json: true
-            }).then((response) => response.json())
-                .then((responseData) => {
-                    console.log(responseData);
-                })
-
-        }
-
-    </script>
-
 </body>
 
 </html>
