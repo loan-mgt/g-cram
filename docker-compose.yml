@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+  backend:
+    build:
+      context: .
+      dockerfile: back/Dockerfile
+    container_name: api-g-cram
+    ports:
+      - "8090:8090"
+    environment:
+      - SERVER_PORT=8090
+      - LOG_LEVEL=info
+    restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - api
   nginx:
     image: nginx:latest
     container_name: my_nginx
