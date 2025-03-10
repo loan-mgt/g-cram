@@ -22,9 +22,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o 
 # Final stage
 FROM alpine:3.21.3
 
-# Add CA certificates for HTTPS
-RUN apk --no-cache add ca-certificates tzdata ffmpeg
-
 # Create non-root user
 RUN adduser -D -g '' appuser
 
@@ -33,9 +30,6 @@ WORKDIR /app
 
 # Copy the binary from builder
 COPY --from=builder /app/uploader .
-
-# Expose API port
-EXPOSE 8080
 
 # Use non-root user
 USER appuser

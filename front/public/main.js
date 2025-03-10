@@ -50,7 +50,7 @@ function oauthSignIn() {
         'client_id': '949757780668-mptrdgdc2hfvdu5bul8t7boog88nbd07.apps.googleusercontent.com',
         'redirect_uri': 'http://localhost:8080/',
         'response_type': 'token',
-        'scope': 'https://www.googleapis.com/auth/photoslibrary.readonly https://www.googleapis.com/auth/photospicker.mediaitems.readonly',
+        'scope': 'https://www.googleapis.com/auth/photoslibrary https://www.googleapis.com/auth/photospicker.mediaitems.readonly',
         'include_granted_scopes': 'true',
         'state': 'pass-through value'
     };
@@ -132,33 +132,6 @@ function fetchMediaItems(id, token, size = 25) {
             readerMedia(responseData.mediaItems.filter(mediaItem => mediaItem.type === 'VIDEO'));
 
         });
-
-    /**
-     * [
-    {
-        "id": "ADXtojJYFMtZiW4004m5FSaXgmvTRr2RnP3gUpewIEyjsKKOVuovTlck7-xn4QmgLRiA3UHKhOIrBZERja6LmW3yVEutmw7TSQ",
-        "createTime": "2025-02-27T23:34:05.466Z",
-        "type": "PHOTO",
-        "mediaFile": {
-            "baseUrl": "https://lh3.googleusercontent.com/ppa/AGmLvJg2jwoR5-QWUP-pGpLyngWlYPNLmHKlhWGUcpi4q9JM2No__Oy4tdxXX0Tfh9C_mtBcW9w_SQ",
-            "mimeType": "image/jpeg",
-            "mediaFileMetadata": {
-                "width": 3264,
-                "height": 2448,
-                "cameraMake": "Google",
-                "cameraModel": "Pixel 4a (5G)",
-                "photoMetadata": {
-                    "focalLength": 2.57,
-                    "apertureFNumber": 2,
-                    "isoEquivalent": 1822,
-                    "exposureTime": "0.055546998s"
-                }
-            },
-            "filename": "PXL_20250227_233405466.jpg"
-        }
-    }
-]
-     */
 }
 
 function readerMedia(mediaItems) {

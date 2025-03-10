@@ -25,12 +25,26 @@ services:
       - LOG_LEVEL=info
     #restart: unless-stopped
     volumes:
-      - ./media/in:/tmp/in
+      - ./media/in:/tmp/in:ro
       - ./media/out:/tmp/out
     networks:
       default:
         aliases:
           - cramer
+  uploader:
+    build:
+      context: .
+      dockerfile: uploader/Dockerfile
+    container_name: uploader-g-cram
+    environment:
+      - LOG_LEVEL=info
+    #restart: unless-stopped
+    volumes:
+      - ./media/out:/tmp/out:ro
+    networks:
+      default:
+        aliases:
+          - uploader
   nginx:
     image: nginx:latest
     container_name: front-g-cram
