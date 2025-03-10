@@ -16,6 +16,21 @@ services:
       default:
         aliases:
           - api
+  compressor:
+    build:
+      context: .
+      dockerfile: cramer/Dockerfile
+    container_name: cramer-g-cram
+    environment:
+      - LOG_LEVEL=info
+    #restart: unless-stopped
+    volumes:
+      - ./media/in:/tmp/in
+      - ./media/out:/tmp/out
+    networks:
+      default:
+        aliases:
+          - cramer
   nginx:
     image: nginx:latest
     container_name: front-g-cram
