@@ -1,15 +1,18 @@
 console.log('loaded')
 
 const base = 'https://photospicker.googleapis.com';
+const api = 'http://localhost:8090/api/v1';
 const mediaHolder = document.querySelector('#media-holder');
 const loginButton = document.querySelector('#login-button');
 const pickerLink = document.querySelector('#picker');
 const pickerButton = document.querySelector('#picker2');
+const startButton = document.querySelector('#start');
 const urlFragment = window.location.hash;
 let accessToken;
 let sessionId;
 let pickerUri;
 let picker;
+let mediaItems;
 pickerButton.disable = true;
 
 
@@ -20,6 +23,8 @@ pickerButton.addEventListener('click', function () {
         picker.focus();
     }
 });
+
+startButton.addEventListener('click', startCompression);
 
 if (urlFragment) {
     if (urlFragment.includes("access_token")) {
@@ -128,7 +133,7 @@ function fetchMediaItems(id, token, size = 25) {
     }).then((response) => response.json())
         .then((responseData) => {
             console.log('responseData', responseData)
-
+            mediaItems = responseData.mediaItems;
             readerMedia(responseData.mediaItems.filter(mediaItem => mediaItem.type === 'VIDEO'));
 
         });
@@ -193,4 +198,25 @@ const loadVideoIntoVideo = (videoId, baseUrl) => {
             document.getElementById(videoId).src = URL.createObjectURL(blob)
         })
     })
+}
+
+
+function startCompression() {
+    fetch(`${api}/start`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + accessToken
+        },
+        body: JSON.stringify(mediaItems.filter(mediaItem => mediaItem.type === 'VIDEO')
+            .map(mediaItem => ({
+                id: mediaItem.id,
+                creationDate: mediaItem.createTime,
+                name: mediaItem.mediaFile.filename
+            }))),
+        json: true
+    }).then((response) => response.json())
+        .then((responseData) => {
+            console.log('responseData', responseData)
+        });
 }

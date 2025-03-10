@@ -1,7 +1,6 @@
 package server
 
 import (
-	"loan-mgt/g-cram/internal/config"
 	"loan-mgt/g-cram/internal/server/handler"
 	"loan-mgt/g-cram/internal/service"
 	"time"
@@ -11,14 +10,8 @@ import (
 )
 
 // NewRouter sets up and configures all API routes
-func NewRouter() *gin.Engine {
+func NewRouter(amqpConn *service.AMQPConnection) *gin.Engine {
 	router := gin.Default()
-
-	amqpConn, err := service.NewAMQPConnection(config.New())
-	if err != nil {
-		panic(err)
-	}
-	defer amqpConn.Conn.Close()
 
 	corsConfig := cors.Config{
 		AllowOrigins:     []string{"http://localhost:8080"},

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
 
 	"github.com/gin-gonic/gin"
@@ -58,6 +59,7 @@ func (h *APIHandler) GetImage(c *gin.Context) {
 func (h *APIHandler) GetVideo(c *gin.Context) {
 	var payload struct {
 		BaseURL string `json:"baseUrl"`
+		Id      string `json:"id"`
 	}
 
 	if err := c.BindJSON(&payload); err != nil {
@@ -77,8 +79,11 @@ func (h *APIHandler) GetVideo(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
 	req.Header.Set("Authorization", c.Request.Header.Get("Authorization"))
+
+	go func() {
+		saveVideoToFile(payload.Id, req)
+	}()
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -97,6 +102,31 @@ func (h *APIHandler) GetVideo(c *gin.Context) {
 	c.Writer.Header().Set("Content-Disposition", resp.Header.Get("Content-Disposition"))
 	c.Writer.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
 	c.Writer.Write(buf)
+}
+
+func saveVideoToFile(id string, req *http.Request) {
+	videoPath := fmt.Sprintf("/tmp/in/%s.mp4", id)
+	fmt.Println(videoPath)
+	f, err := os.Create(videoPath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer f.Close()
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(f, resp.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
 
 func isGoogleStorageURL(url string) bool {

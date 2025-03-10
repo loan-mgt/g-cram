@@ -12,14 +12,21 @@ import (
 
 	"loan-mgt/g-cram/internal/config"
 	"loan-mgt/g-cram/internal/server"
+	"loan-mgt/g-cram/internal/service"
 )
 
 func main() {
 	// Load configuration
 	cfg := config.New()
 
+	amqpConn, err := service.NewAMQPConnection(config.New())
+	if err != nil {
+		panic(err)
+	}
+	defer amqpConn.Conn.Close()
+
 	// Set up router
-	router := server.NewRouter()
+	router := server.NewRouter(amqpConn)
 
 	// Configure HTTP server
 	srv := &http.Server{
