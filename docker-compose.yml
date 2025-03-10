@@ -18,7 +18,7 @@ services:
           - api
   nginx:
     image: nginx:latest
-    container_name: my_nginx
+    container_name: front-g-cram
     ports:
       - "8080:80"
     volumes:
