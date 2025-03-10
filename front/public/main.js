@@ -168,7 +168,7 @@ function imageFactory(mediaItem, w = 128, h = 128) {
 const loadImageIntoImg = (imgId, baseUrl) => {
     fetch('http://localhost:8090/api/v1/get-image', {
         method: 'POST',
-        body: JSON.stringify({ baseUrl: baseUrl }),
+        body: JSON.stringify({ baseUrl, id: imgId }),
         headers: {
             'Authorization': 'Bearer ' + accessToken,
         },
@@ -183,7 +183,7 @@ const loadImageIntoImg = (imgId, baseUrl) => {
 const loadVideoIntoVideo = (videoId, baseUrl) => {
     fetch('http://localhost:8090/api/v1/get-video', {
         method: 'POST',
-        body: JSON.stringify({ baseUrl: baseUrl }),
+        body: JSON.stringify({ baseUrl, id: videoId }),
         headers: {
             'Authorization': 'Bearer ' + accessToken,
         },

@@ -2,26 +2,32 @@ package main
 
 import (
 	"fmt"
-	"os/exec"
+	"loan-mgt/cramer/internal/config"
+	"loan-mgt/cramer/internal/handler"
+	"loan-mgt/cramer/internal/service"
 )
 
 func main() {
+	// Load configuration
+	cfg := config.New()
 
-	creationDate := "2025-02-27T23:34:58Z"
-
-	filename := "6a3cddbf-11a0-43d0-9f35-be1ce2490807"
-	inputPath := fmt.Sprintf("/tmp/in/%s.mp4", filename)
-	outputPath := fmt.Sprintf("/tmp/out/%s.mp4", filename)
-
-	cmd := exec.Command("ffmpeg", "-i", inputPath, "-vcodec", "libx265", "-crf", "28", "-metadata",
-		fmt.Sprintf("creation_time=%s", creationDate), "-c:v", "copy", "-c:a", "copy", "-f", "mp4", outputPath)
-
-	output, err := cmd.CombinedOutput()
+	// Create AMQP connection
+	amqpConn, err := service.NewAMQPConnection(cfg)
 	if err != nil {
-		fmt.Printf("Error: %s\n", err)
-		fmt.Printf("Output: %s\n", output)
+		fmt.Println(err)
+		return
+	}
+	defer amqpConn.Conn.Close()
+
+	// Consume messages from queue
+	msgs, err := amqpConn.ConsumeCramerQueue()
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 
-	fmt.Println("Done")
+	for d := range msgs {
+		handler.HandleCompression(d.Body, amqpConn)
+	}
+
 }
