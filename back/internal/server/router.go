@@ -1,7 +1,9 @@
 package server
 
 import (
+	"loan-mgt/g-cram/internal/config"
 	"loan-mgt/g-cram/internal/server/handler"
+	"loan-mgt/g-cram/internal/service"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -11,6 +13,12 @@ import (
 // NewRouter sets up and configures all API routes
 func NewRouter() *gin.Engine {
 	router := gin.Default()
+
+	amqpConn, err := service.NewAMQPConnection(config.New())
+	if err != nil {
+		panic(err)
+	}
+	defer amqpConn.Conn.Close()
 
 	corsConfig := cors.Config{
 		AllowOrigins:     []string{"http://localhost:8080"},
@@ -24,7 +32,7 @@ func NewRouter() *gin.Engine {
 	router.Use(cors.New(corsConfig))
 
 	// Create handlers
-	apiHandler := handler.NewAPIHandler()
+	apiHandler := handler.NewAPIHandler(amqpConn)
 
 	// Define routes
 	router.GET("/health", apiHandler.HealthCheck)
@@ -34,6 +42,7 @@ func NewRouter() *gin.Engine {
 	{
 		v1.POST("/get-image", apiHandler.GetImage)
 		v1.POST("/get-video", apiHandler.GetVideo)
+		v1.POST("/start", apiHandler.Start)
 	}
 
 	return router

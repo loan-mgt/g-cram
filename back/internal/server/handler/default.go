@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"loan-mgt/g-cram/internal/service"
 	"net/http"
 	"time"
 
@@ -8,10 +9,11 @@ import (
 )
 
 type APIHandler struct {
+	amqpConn *service.AMQPConnection
 }
 
-func NewAPIHandler() *APIHandler {
-	return &APIHandler{}
+func NewAPIHandler(amqpConn *service.AMQPConnection) *APIHandler {
+	return &APIHandler{amqpConn: amqpConn}
 }
 
 // HealthCheck handles health check requests

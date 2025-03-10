@@ -7,15 +7,23 @@ import (
 
 // Config holds application configuration
 type Config struct {
-	ServerPort int
-	LogLevel   string
+	ServerPort   int
+	LogLevel     string
+	RabbitMQHost string
+	RabbitMQPort int
+	RabbitMQUser string
+	RabbitMQPass string
 }
 
 // New returns a new Config with values from environment variables or defaults
 func New() *Config {
 	return &Config{
-		ServerPort: getEnvAsInt("SERVER_PORT", 8080),
-		LogLevel:   getEnv("LOG_LEVEL", "info"),
+		ServerPort:   getEnvAsInt("SERVER_PORT", 8080),
+		LogLevel:     getEnv("LOG_LEVEL", "info"),
+		RabbitMQHost: getEnv("RABBITMQ_HOST", "localhost"),
+		RabbitMQPort: getEnvAsInt("RABBITMQ_PORT", 5672),
+		RabbitMQUser: getEnv("RABBITMQ_USER", "guest"),
+		RabbitMQPass: getEnv("RABBITMQ_PASS", "guest"),
 	}
 }
 
