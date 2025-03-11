@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"loan-mgt/g-cram/internal/config"
+	"loan-mgt/g-cram/internal/db"
 	"loan-mgt/g-cram/internal/server"
 	"loan-mgt/g-cram/internal/service"
 )
@@ -18,6 +19,9 @@ import (
 func main() {
 	// Load configuration
 	cfg := config.New()
+
+	store := db.NewStore(cfg)
+	defer store.Close()
 
 	amqpConn, err := service.NewAMQPConnection(config.New())
 	if err != nil {

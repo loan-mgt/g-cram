@@ -17,6 +17,7 @@ services:
       - RABBITMQ_PASS=${RABBITMQ_DEFAULT_PASS}
     volumes:
       - ./media/in:/tmp/in
+      - ./database:/database
     depends_on:
       rabbitmq:
         condition: service_healthy
