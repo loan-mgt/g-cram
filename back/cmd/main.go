@@ -30,7 +30,7 @@ func main() {
 	defer amqpConn.Conn.Close()
 
 	// Set up router
-	router := server.NewRouter(amqpConn)
+	router := server.NewRouter(store, amqpConn)
 
 	// Configure HTTP server
 	srv := &http.Server{

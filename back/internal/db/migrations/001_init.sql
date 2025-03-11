@@ -1,3 +1,4 @@
+-- +migrate Up
 CREATE TABLE users (
     id TEXT PRIMARY KEY,
     token TEXT,
@@ -23,3 +24,13 @@ CREATE TABLE media (
     done INTEGER
 );
 CREATE INDEX idx_media_session_id ON media(session_id);
+
+-- +migrate Down
+DROP INDEX idx_media_session_id;
+DROP TABLE media;
+DROP INDEX idx_jobs_session_id;
+DROP INDEX idx_jobs_user_id;
+DROP TABLE jobs;
+DROP INDEX idx_users_id;
+DROP TABLE users;
+

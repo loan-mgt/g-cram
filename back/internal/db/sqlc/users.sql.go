@@ -36,30 +36,17 @@ func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 	return i, err
 }
 
-const updateUserToken = `-- name: UpdateUserToken :exec
-UPDATE users SET token = ? WHERE id = ?
+const updateUserTokenAndWebsocket = `-- name: UpdateUserTokenAndWebsocket :exec
+UPDATE users SET token = ?, websocket = ? WHERE id = ?
 `
 
-type UpdateUserTokenParams struct {
-	Token sql.NullString `json:"token"`
-	ID    string         `json:"id"`
-}
-
-func (q *Queries) UpdateUserToken(ctx context.Context, arg UpdateUserTokenParams) error {
-	_, err := q.exec(ctx, q.updateUserTokenStmt, updateUserToken, arg.Token, arg.ID)
-	return err
-}
-
-const updateUserWebsocket = `-- name: UpdateUserWebsocket :exec
-UPDATE users SET websocket = ? WHERE id = ?
-`
-
-type UpdateUserWebsocketParams struct {
+type UpdateUserTokenAndWebsocketParams struct {
+	Token     sql.NullString `json:"token"`
 	Websocket sql.NullString `json:"websocket"`
 	ID        string         `json:"id"`
 }
 
-func (q *Queries) UpdateUserWebsocket(ctx context.Context, arg UpdateUserWebsocketParams) error {
-	_, err := q.exec(ctx, q.updateUserWebsocketStmt, updateUserWebsocket, arg.Websocket, arg.ID)
+func (q *Queries) UpdateUserTokenAndWebsocket(ctx context.Context, arg UpdateUserTokenAndWebsocketParams) error {
+	_, err := q.exec(ctx, q.updateUserTokenAndWebsocketStmt, updateUserTokenAndWebsocket, arg.Token, arg.Websocket, arg.ID)
 	return err
 }

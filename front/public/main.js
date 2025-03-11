@@ -31,6 +31,7 @@ if (urlFragment) {
         accessToken = urlFragment.split("access_token=")[1].split("&")[0];
         console.log("Access Token:", accessToken);
         loginButton.style.display = 'none';
+        startWebSocket();
 
         disaplyContent();
     } else if (urlFragment.includes("error")) {
@@ -39,7 +40,16 @@ if (urlFragment) {
     }
 }
 
+function startWebSocket() {
+    const clientId = 'bob'
 
+    const ws = new WebSocket(`ws://localhost:8090/api/v1/ws?token=${accessToken}&id=${'clientId'}`);
+
+    ws.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        console.log(data);
+    };
+}
 
 function oauthSignIn() {
     // Google's OAuth 2.0 endpoint for requesting an access token

@@ -2,12 +2,14 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	"loan-mgt/g-cram/internal/config"
 	"loan-mgt/g-cram/internal/db/sqlc"
 
 	_ "github.com/mattn/go-sqlite3"
+	migrate "github.com/rubenv/sql-migrate"
 )
 
 // Store provides all functions to execute db queries and transactions
@@ -18,10 +20,21 @@ type Store struct {
 
 // NewStore creates a new store
 func NewStore(cfg *config.Config) *Store {
+
+	migrations := &migrate.FileMigrationSource{
+		Dir: "/migrations",
+	}
+
 	db, err := sql.Open("sqlite3", cfg.DBPath)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
+
+	n, err := migrate.Exec(db, "sqlite3", migrations, migrate.Up)
+	if err != nil {
+		log.Fatalf("Failed to apply migrations: %v", err)
+	}
+	fmt.Printf("Applied %d migrations!\n", n)
 
 	return &Store{
 		db:      db,

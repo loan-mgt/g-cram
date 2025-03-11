@@ -5,7 +5,7 @@ FROM golang:1.24.1-alpine AS builder
 WORKDIR /app
 
 # Install git and build dependencies
-RUN apk add --no-cache git
+RUN apk add --no-cache git gcc musl-dev
 
 # Copy go.mod and go.sum files
 COPY back/go.mod back/go.sum* ./
@@ -17,7 +17,7 @@ RUN go mod download
 COPY back/ ./
 
 # Build the application with optimizations
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o apiserver ./cmd/main.go
+RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o apiserver ./cmd/main.go
 
 # Final stage
 FROM alpine:3.21.3
@@ -33,6 +33,7 @@ WORKDIR /app
 
 # Copy the binary from builder
 COPY --from=builder /app/apiserver .
+COPY --from=builder /app/internal/db/migrations /migrations
 
 # Expose API port
 EXPOSE 8080
