@@ -3,6 +3,7 @@ package server
 import (
 	"loan-mgt/g-cram/internal/db"
 	"loan-mgt/g-cram/internal/server/handler"
+	"loan-mgt/g-cram/internal/server/ws"
 	"loan-mgt/g-cram/internal/service"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 )
 
 // NewRouter sets up and configures all API routes
-func NewRouter(store *db.Store, amqpConn *service.AMQPConnection) *gin.Engine {
+func NewRouter(store *db.Store, amqpConn *service.AMQPConnection, ws *ws.WebSocketManager) *gin.Engine {
 	router := gin.Default()
 
 	corsConfig := cors.Config{
@@ -26,7 +27,7 @@ func NewRouter(store *db.Store, amqpConn *service.AMQPConnection) *gin.Engine {
 	router.Use(cors.New(corsConfig))
 
 	// Create handlers
-	apiHandler := handler.NewAPIHandler(store, amqpConn)
+	apiHandler := handler.NewAPIHandler(store, amqpConn, ws)
 
 	// Define routes
 	router.GET("/health", apiHandler.HealthCheck)

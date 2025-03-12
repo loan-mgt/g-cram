@@ -1,4 +1,4 @@
-package websocket
+package ws
 
 import (
 	"fmt"
@@ -59,5 +59,14 @@ func (wm *WebSocketManager) BroadcastMessage(message string) {
 
 	for _, client := range wm.clients {
 		_ = client.conn.WriteMessage(websocket.TextMessage, []byte(message))
+	}
+}
+
+func (wm *WebSocketManager) Close() {
+	wm.mu.Lock()
+	defer wm.mu.Unlock()
+	for _, client := range wm.clients {
+		client.conn.Close()
+		delete(wm.clients, client.ID)
 	}
 }

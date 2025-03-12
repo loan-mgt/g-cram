@@ -13,6 +13,7 @@ import (
 	"loan-mgt/g-cram/internal/config"
 	"loan-mgt/g-cram/internal/db"
 	"loan-mgt/g-cram/internal/server"
+	"loan-mgt/g-cram/internal/server/ws"
 	"loan-mgt/g-cram/internal/service"
 )
 
@@ -29,8 +30,11 @@ func main() {
 	}
 	defer amqpConn.Conn.Close()
 
+	ws := ws.NewWebSocketManager()
+	defer ws.Close()
+
 	// Set up router
-	router := server.NewRouter(store, amqpConn)
+	router := server.NewRouter(store, amqpConn, ws)
 
 	// Configure HTTP server
 	srv := &http.Server{

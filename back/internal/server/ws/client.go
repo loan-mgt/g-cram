@@ -1,4 +1,4 @@
-package websocket
+package ws
 
 import (
 	"log"
@@ -8,8 +8,8 @@ import (
 
 // Client represents a WebSocket client connection.
 type Client struct {
-	ID     string
-	conn   *websocket.Conn
+	ID      string
+	conn    *websocket.Conn
 	manager *WebSocketManager
 }
 

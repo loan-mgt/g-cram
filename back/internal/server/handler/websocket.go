@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"loan-mgt/g-cram/internal/db/sqlc"
-	"loan-mgt/g-cram/internal/server/websocket"
 	"log"
 	"net/http"
 
