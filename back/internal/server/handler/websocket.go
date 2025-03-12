@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"loan-mgt/g-cram/internal/db/sqlc"
+	"loan-mgt/g-cram/internal/server/websocket"
 	"log"
 	"net/http"
 
@@ -24,66 +25,54 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// WebSocketHandler handles WebSocket connections.
 func (h *APIHandler) WebSocket(c *gin.Context) {
 	w, r := c.Writer, c.Request
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("upgrade:", err)
+		log.Println("WebSocket upgrade error:", err)
 		return
 	}
-	defer conn.Close()
-	//?token=${accessToken}&id=${urlFragment.split("client_id=")[1].split("&")[0]}
-	// extract info create user if not existe, else update
+
+	// Extract client ID and token from query parameters
 	token := c.Request.URL.Query().Get("token")
 	id := c.Request.URL.Query().Get("id")
 
+	// Check if the user exists in the database
 	_, err = h.db.GetUser(context.Background(), id)
 	if err != nil {
-		// create user
+		// Create user if not exists
 		arg := sqlc.CreateUserParams{
 			ID:        id,
 			Token:     sql.NullString{String: token, Valid: true},
 			Websocket: sql.NullString{String: conn.RemoteAddr().String(), Valid: true},
 		}
-		err = h.db.CreateUser(context.Background(), arg)
-		if err != nil {
-			err = conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
-			if err != nil {
-				log.Println("write:", err)
-				return
-			}
+		if err = h.db.CreateUser(context.Background(), arg); err != nil {
+			_ = conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+			conn.Close()
 			return
 		}
 	} else {
-		// update user
+		// Update user token and WebSocket connection
 		arg := sqlc.UpdateUserTokenAndWebsocketParams{
 			ID:        id,
 			Token:     sql.NullString{String: token, Valid: true},
 			Websocket: sql.NullString{String: conn.RemoteAddr().String(), Valid: true},
 		}
-		err = h.db.UpdateUserTokenAndWebsocket(context.Background(), arg)
-		if err != nil {
-			err = conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
-			if err != nil {
-				log.Println("write:", err)
-				return
-			}
+		if err = h.db.UpdateUserTokenAndWebsocket(context.Background(), arg); err != nil {
+			_ = conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+			conn.Close()
 			return
 		}
 	}
 
-	// send message
-	err = conn.WriteMessage(websocket.TextMessage, []byte("Hello from cramer"))
-	if err != nil {
-		log.Println("write:", err)
-		return
-	}
+	// Register WebSocket connection with the manager
+	h.wsManager.AddClient(id, conn)
 
-	// receive message
-	_, message, err := conn.ReadMessage()
-	if err != nil {
-		log.Println("read:", err)
-		return
+	// Send welcome message
+	if err = conn.WriteMessage(websocket.TextMessage, []byte("Hello from cramer")); err != nil {
+		log.Println("WebSocket write error:", err)
+		h.wsManager.RemoveClient(id)
+		conn.Close()
 	}
-	log.Printf("recv: %s", message)
 }
