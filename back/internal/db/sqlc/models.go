@@ -25,7 +25,6 @@ type Medium struct {
 }
 
 type User struct {
-	ID        string         `json:"id"`
-	Token     sql.NullString `json:"token"`
-	Websocket sql.NullString `json:"websocket"`
+	ID    string         `json:"id"`
+	Token sql.NullString `json:"token"`
 }

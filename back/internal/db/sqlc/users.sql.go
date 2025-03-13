@@ -11,42 +11,40 @@ import (
 )
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, token, websocket) VALUES (?, ?, ?)
+INSERT INTO users (id, token) VALUES (?, ?)
 `
 
 type CreateUserParams struct {
-	ID        string         `json:"id"`
-	Token     sql.NullString `json:"token"`
-	Websocket sql.NullString `json:"websocket"`
+	ID    string         `json:"id"`
+	Token sql.NullString `json:"token"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
-	_, err := q.exec(ctx, q.createUserStmt, createUser, arg.ID, arg.Token, arg.Websocket)
+	_, err := q.exec(ctx, q.createUserStmt, createUser, arg.ID, arg.Token)
 	return err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, token, websocket FROM users WHERE id = ? LIMIT 1
+SELECT id, token FROM users WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 	row := q.queryRow(ctx, q.getUserStmt, getUser, id)
 	var i User
-	err := row.Scan(&i.ID, &i.Token, &i.Websocket)
+	err := row.Scan(&i.ID, &i.Token)
 	return i, err
 }
 
-const updateUserTokenAndWebsocket = `-- name: UpdateUserTokenAndWebsocket :exec
-UPDATE users SET token = ?, websocket = ? WHERE id = ?
+const updateUserToken = `-- name: UpdateUserToken :exec
+UPDATE users SET token = ? WHERE id = ?
 `
 
-type UpdateUserTokenAndWebsocketParams struct {
-	Token     sql.NullString `json:"token"`
-	Websocket sql.NullString `json:"websocket"`
-	ID        string         `json:"id"`
+type UpdateUserTokenParams struct {
+	Token sql.NullString `json:"token"`
+	ID    string         `json:"id"`
 }
 
-func (q *Queries) UpdateUserTokenAndWebsocket(ctx context.Context, arg UpdateUserTokenAndWebsocketParams) error {
-	_, err := q.exec(ctx, q.updateUserTokenAndWebsocketStmt, updateUserTokenAndWebsocket, arg.Token, arg.Websocket, arg.ID)
+func (q *Queries) UpdateUserToken(ctx context.Context, arg UpdateUserTokenParams) error {
+	_, err := q.exec(ctx, q.updateUserTokenStmt, updateUserToken, arg.Token, arg.ID)
 	return err
 }

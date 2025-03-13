@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"loan-mgt/g-cram/internal/config"
 	"loan-mgt/g-cram/internal/db"
 	"loan-mgt/g-cram/internal/server/ws"
 	"loan-mgt/g-cram/internal/service"
@@ -8,16 +9,20 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 type APIHandler struct {
 	amqpConn  *service.AMQPConnection
 	db        *db.Store
 	wsManager *ws.WebSocketManager
+	cfg       *config.Config
+	upgrader  *websocket.Upgrader
 }
 
-func NewAPIHandler(db *db.Store, amqpConn *service.AMQPConnection, wsManager *ws.WebSocketManager) *APIHandler {
-	return &APIHandler{db: db, amqpConn: amqpConn, wsManager: wsManager}
+func NewAPIHandler(db *db.Store, amqpConn *service.AMQPConnection, wsManager *ws.WebSocketManager,
+	cfg *config.Config, upgrader *websocket.Upgrader) *APIHandler {
+	return &APIHandler{db: db, amqpConn: amqpConn, wsManager: wsManager, cfg: cfg, upgrader: upgrader}
 }
 
 // HealthCheck handles health check requests

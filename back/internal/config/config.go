@@ -14,6 +14,7 @@ type Config struct {
 	RabbitMQUser string
 	RabbitMQPass string
 	DBPath       string
+	FrontUrl     string
 }
 
 // New returns a new Config with values from environment variables or defaults
@@ -26,6 +27,7 @@ func New() *Config {
 		RabbitMQUser: getEnv("RABBITMQ_USER", "guest"),
 		RabbitMQPass: getEnv("RABBITMQ_PASS", "guest"),
 		DBPath:       getEnv("DB_PATH", "/database/g-cram.db"),
+		FrontUrl:     getEnv("FRONT_URL", "http://localhost:8080"),
 	}
 }
 
