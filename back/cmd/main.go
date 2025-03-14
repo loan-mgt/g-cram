@@ -24,7 +24,7 @@ func main() {
 	store := db.NewStore(cfg)
 	defer store.Close()
 
-	amqpConn, err := service.NewAMQPConnection(config.New())
+	amqpConn, err := service.NewAMQPConnection(config.New(), "cramer")
 	if err != nil {
 		panic(err)
 	}

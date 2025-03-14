@@ -14,7 +14,7 @@ type AMQPConnection struct {
 	Queue   amqp.Queue
 }
 
-func NewAMQPConnection(cfg *config.Config) (*AMQPConnection, error) {
+func NewAMQPConnection(cfg *config.Config, subject string) (*AMQPConnection, error) {
 	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/",
 		cfg.RabbitMQUser, cfg.RabbitMQPass, cfg.RabbitMQHost, cfg.RabbitMQPort))
 	if err != nil {
@@ -27,12 +27,12 @@ func NewAMQPConnection(cfg *config.Config) (*AMQPConnection, error) {
 	}
 
 	q, err := ch.QueueDeclare(
-		"cramer", // name
-		true,     // durable
-		false,    // delete when unused
-		false,    // exclusive
-		false,    // no-wait
-		nil,      // arguments
+		subject, // name
+		true,    // durable
+		false,   // delete when unused
+		false,   // exclusive
+		false,   // no-wait
+		nil,     // arguments
 	)
 	if err != nil {
 		return nil, err
@@ -67,5 +67,17 @@ func (a *AMQPConnection) SendRequest(token, id, creationDate, filename, videoPat
 			ContentType: "application/json",
 			Body:        jsonData,
 		},
+	)
+}
+
+func (a *AMQPConnection) Consume() (<-chan amqp.Delivery, error) {
+	return a.Channel.Consume(
+		a.Queue.Name, // queue
+		"",           // consumer
+		true,         // auto-ack
+		false,        // exclusive
+		false,        // no-local
+		false,        // no-wait
+		nil,          // args
 	)
 }
