@@ -6,11 +6,12 @@ import (
 	"loan-mgt/uploader/internal/service"
 )
 
-func HandleUpload(body []byte) {
+func HandleUpload(body []byte, conn *service.AMQPConnection) {
 	var msg struct {
 		Token     string `json:"token"`
 		VideoPath string `json:"videoPath"`
 		FileName  string `json:"fileName"`
+		UserId    string `json:"userId"`
 	}
 	err := json.Unmarshal(body, &msg)
 	if err != nil {
@@ -26,7 +27,7 @@ func HandleUpload(body []byte) {
 
 	fmt.Println("Video uploaded successfully")
 
-	err = amqpConn.SendRequest(msg.Token, msg.Name, fmt.Sprintf("/tmp/out/%s.mp4", msg.Id))
+	err = conn.SendNotificationRequest(msg.Token, msg.FileName, msg.UserId)
 	if err != nil {
 		fmt.Printf("Error uploading video: %s\n", err)
 		return

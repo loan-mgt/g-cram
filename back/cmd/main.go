@@ -33,6 +33,8 @@ func main() {
 	ws := ws.NewWebSocketManager()
 	defer ws.Close()
 
+	go service.StartListener(ws)
+
 	// Set up router
 	router := server.NewRouter(store, amqpConn, ws, cfg)
 

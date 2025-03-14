@@ -13,6 +13,7 @@ func HandleCompression(body []byte, amqpConn *service.AMQPConnection) {
 		Id           string `json:"id"`
 		CreationDate string `json:"creationDate"`
 		Name         string `json:"name"`
+		UserId       string `json:"userId"`
 	}
 
 	err := json.Unmarshal(body, &msg)
@@ -29,7 +30,7 @@ func HandleCompression(body []byte, amqpConn *service.AMQPConnection) {
 
 	fmt.Println("Compressed video created successfully")
 
-	err = amqpConn.SendRequest(msg.Token, msg.Name, fmt.Sprintf("/tmp/out/%s.mp4", msg.Id))
+	err = amqpConn.SendRequest(msg.Token, msg.Name, fmt.Sprintf("/tmp/out/%s.mp4", msg.Id), msg.UserId)
 	if err != nil {
 		fmt.Printf("Error uploading video: %s\n", err)
 		return

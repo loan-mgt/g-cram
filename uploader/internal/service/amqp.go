@@ -71,10 +71,26 @@ func (a *AMQPConnection) Consume() (<-chan amqp.Delivery, error) {
 	)
 }
 
-func (a *AMQPConnection) SendRequest(token, filename string) error {
+func (a *AMQPConnection) SendRequest(channelName string, jsonData []byte) error {
+
+	return a.Channel.Publish(
+		"",          // exchange
+		channelName, // routing key
+		false,       // mandatory
+		false,       // immediate
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        jsonData,
+		},
+	)
+}
+
+func (a *AMQPConnection) SendNotificationRequest(token, filename, userId string) error {
+
 	data := map[string]string{
 		"token":    token,
 		"filename": filename,
+		"userId":   userId,
 	}
 
 	jsonData, err := json.Marshal(data)
@@ -82,14 +98,6 @@ func (a *AMQPConnection) SendRequest(token, filename string) error {
 		return err
 	}
 
-	return a.Channel.Publish(
-		"",           // exchange
-		a.Queue.Name, // routing key
-		false,        // mandatory
-		false,        // immediate
-		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        jsonData,
-		},
-	)
+	return a.SendRequest(a.NotifQueue.Name, jsonData)
+
 }

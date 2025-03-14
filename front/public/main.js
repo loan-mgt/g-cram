@@ -212,7 +212,7 @@ const loadVideoIntoVideo = (videoId, baseUrl) => {
 
 
 function startCompression() {
-    fetch(`${api}/start`, {
+    fetch(`${api}/start?id=${'clientId'}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

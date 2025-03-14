@@ -29,6 +29,6 @@ func main() {
 	}
 
 	for d := range msgs {
-		handler.HandleUpload(d.Body)
+		handler.HandleUpload(d.Body, amqpConn)
 	}
 }

@@ -16,6 +16,8 @@ func (h *APIHandler) Start(c *gin.Context) {
 		Name         string `json:"name"`
 	}
 
+	userId := c.Request.URL.Query().Get("id")
+
 	jsonData, err := c.GetRawData()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -32,7 +34,7 @@ func (h *APIHandler) Start(c *gin.Context) {
 	for _, p := range payload {
 		videoPath := fmt.Sprintf("/tmp/in/%s.mp4", p.Id)
 		fmt.Println(videoPath)
-		err = h.amqpConn.SendRequest(token, p.Id, p.CreationDate, p.Name, videoPath)
+		err = h.amqpConn.SendRequest(token, p.Id, p.CreationDate, p.Name, videoPath, userId)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

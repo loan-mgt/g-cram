@@ -45,12 +45,13 @@ func NewAMQPConnection(cfg *config.Config, subject string) (*AMQPConnection, err
 	}, nil
 }
 
-func (a *AMQPConnection) SendRequest(token, id, creationDate, filename, videoPath string) error {
+func (a *AMQPConnection) SendRequest(token, id, creationDate, filename, videoPath, userId string) error {
 	data := map[string]string{
 		"token":        token,
 		"id":           id,
 		"creationDate": creationDate,
 		"name":         filename,
+		"userId":       userId,
 	}
 
 	jsonData, err := json.Marshal(data)
