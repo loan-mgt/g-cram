@@ -25,13 +25,14 @@ func StartListener(ws *ws.WebSocketManager) {
 
 	for d := range msgs {
 		var payload struct {
-			ID string `json:"id"`
+			Token    string `json:"token"`
+			Filename string `json:"filename"`
 		}
 		if err := json.Unmarshal(d.Body, &payload); err != nil {
 			fmt.Println("Error unmarshal ling message:", err)
 			continue
 		}
-		if err := ws.SendMessageToClient(payload.ID, "Success"); err != nil {
+		if err := ws.SendMessageToClient(payload.Token, "Success"); err != nil {
 			fmt.Println("Error sending message to WebSocket:", err)
 		}
 

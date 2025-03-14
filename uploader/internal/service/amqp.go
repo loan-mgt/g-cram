@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"loan-mgt/uploader/internal/config"
 
@@ -8,9 +9,10 @@ import (
 )
 
 type AMQPConnection struct {
-	Conn    *amqp.Connection
-	Channel *amqp.Channel
-	Queue   amqp.Queue
+	Conn       *amqp.Connection
+	Channel    *amqp.Channel
+	Queue      amqp.Queue
+	NotifQueue amqp.Queue
 }
 
 func NewAMQPConnection(cfg *config.Config) (*AMQPConnection, error) {
@@ -37,10 +39,23 @@ func NewAMQPConnection(cfg *config.Config) (*AMQPConnection, error) {
 		return nil, err
 	}
 
+	qNotif, err := ch.QueueDeclare(
+		"notification", // name
+		true,           // durable
+		false,          // delete when unused
+		false,          // exclusive
+		false,          // no-wait
+		nil,            // arguments
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &AMQPConnection{
-		Conn:    conn,
-		Channel: ch,
-		Queue:   q,
+		Conn:       conn,
+		Channel:    ch,
+		Queue:      q,
+		NotifQueue: qNotif,
 	}, nil
 }
 
@@ -53,5 +68,28 @@ func (a *AMQPConnection) Consume() (<-chan amqp.Delivery, error) {
 		false,        // no-local
 		false,        // no-wait
 		nil,          // args
+	)
+}
+
+func (a *AMQPConnection) SendRequest(token, filename string) error {
+	data := map[string]string{
+		"token":    token,
+		"filename": filename,
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	return a.Channel.Publish(
+		"",           // exchange
+		a.Queue.Name, // routing key
+		false,        // mandatory
+		false,        // immediate
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        jsonData,
+		},
 	)
 }
