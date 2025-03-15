@@ -1,8 +1,7 @@
 -- +migrate Up
 CREATE TABLE users (
     id TEXT PRIMARY KEY,
-    token TEXT,
-    websocket TEXT
+    token TEXT
 );
 CREATE INDEX idx_users_id ON users(id);
 

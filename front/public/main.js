@@ -8,7 +8,6 @@ const pickerLink = document.querySelector('#picker');
 const pickerButton = document.querySelector('#picker2');
 const startButton = document.querySelector('#start');
 const urlFragment = window.location.hash;
-let accessToken;
 let sessionId;
 let pickerUri;
 let picker;
@@ -26,24 +25,61 @@ pickerButton.addEventListener('click', function () {
 
 startButton.addEventListener('click', startCompression);
 
-if (urlFragment) {
-    if (urlFragment.includes("access_token")) {
-        accessToken = urlFragment.split("access_token=")[1].split("&")[0];
-        console.log("Access Token:", accessToken);
-        loginButton.style.display = 'none';
-        startWebSocket();
 
-        disaplyContent();
-    } else if (urlFragment.includes("error")) {
-        const error = urlFragment.split("error=")[1].split("&")[0];
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('code')) {
+    const code = urlParams.get('code');
+
+    initUser(code);
+    window.history.replaceState({}, '', '/');
+    logedIn();
+} else {
+    const error = urlParams.get('error');
+    if (error) {
         console.error("OAuth 2.0 flow error:", error);
     }
+}
+
+if (localStorage.getItem('userId')) {
+    getAccessToken()
+    .then( _ => {
+        logedIn();
+    })
+}
+
+function logedIn() {
+    loginButton.style.display = 'none';
+    startWebSocket();
+    disaplyContent();
+    getUserInfo();
+}
+
+function initUser(code) {
+    fetch(api + '/user', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            code: code,
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('User response:', data);
+        localStorage.setItem('user_id', data.userId);
+        localStorage.setItem('user_name', data.userName);
+        localStorage.setItem('access_token', data.accessToken);
+    })
+    .catch(error => {
+        console.error('Error initializing user:', error);
+    });
 }
 
 function startWebSocket() {
     const clientId = 'bob'
 
-    const ws = new WebSocket(`ws://localhost:8090/api/v1/ws?token=${accessToken}&id=${'clientId'}`);
+    const ws = new WebSocket(`ws://localhost:8090/api/v1/ws?token=${localStorage.getItem('access_token')}&id=${localStorage.getItem('user_id')}`);
 
     ws.onmessage = function (event) {
         const data = JSON.parse(event.data);
@@ -64,7 +100,8 @@ function oauthSignIn() {
     var params = {
         'client_id': '949757780668-mptrdgdc2hfvdu5bul8t7boog88nbd07.apps.googleusercontent.com',
         'redirect_uri': 'http://localhost:8080/',
-        'response_type': 'token',
+        'response_type': 'code',  
+        'access_type': 'offline', 
         'scope': 'https://www.googleapis.com/auth/photoslibrary https://www.googleapis.com/auth/photospicker.mediaitems.readonly',
         'include_granted_scopes': 'true',
         'state': 'pass-through value'
@@ -90,7 +127,7 @@ function disaplyContent() {
         method: "POST",
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + accessToken
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
         },
         json: true,
     }).then((response) => response.json())
@@ -112,7 +149,7 @@ function pullForImages() {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + accessToken
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
         },
         json: true
     }).then((response) => response.json())
@@ -121,7 +158,7 @@ function pullForImages() {
             console.log('responseData get', responseData)
             if (responseData.mediaItemsSet) {
                 console.log("ended", responseData.mediaItemsSet);
-                fetchMediaItems(sessionId, accessToken);
+                fetchMediaItems(sessionId, localStorage.getItem('access_token'));
             } else {
                 setTimeout(() => pullForImages(), 5000);
             }
@@ -185,7 +222,7 @@ const loadImageIntoImg = (imgId, baseUrl) => {
         method: 'POST',
         body: JSON.stringify({ baseUrl, id: imgId }),
         headers: {
-            'Authorization': 'Bearer ' + accessToken,
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
         },
         json: true,
     }).then(res => {
@@ -200,7 +237,7 @@ const loadVideoIntoVideo = (videoId, baseUrl) => {
         method: 'POST',
         body: JSON.stringify({ baseUrl, id: videoId }),
         headers: {
-            'Authorization': 'Bearer ' + accessToken,
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
         },
         json: true,
     }).then(res => {
@@ -212,11 +249,11 @@ const loadVideoIntoVideo = (videoId, baseUrl) => {
 
 
 function startCompression() {
-    fetch(`${api}/start?id=${'clientId'}`, {
+    fetch(`${api}/start?id=${localStorage.getItem('user_id')}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + accessToken
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
         },
         body: JSON.stringify(mediaItems.filter(mediaItem => mediaItem.type === 'VIDEO')
             .map(mediaItem => ({
@@ -229,4 +266,56 @@ function startCompression() {
         .then((responseData) => {
             console.log('responseData', responseData)
         });
+}
+function loginSuccess(response) {
+    console.log('loginSuccess')
+    const responsePayload = decodeJwtResponse(response.credential);
+
+    console.log("ID: " + responsePayload.sub);
+    console.log('Full Name: ' + responsePayload.name);
+    console.log('Given Name: ' + responsePayload.given_name);
+    console.log('Family Name: ' + responsePayload.family_name);
+    console.log("Image URL: " + responsePayload.picture);
+    console.log("Email: " + responsePayload.email);
+
+}
+function decodeJwtResponse(token) {
+    let base64Url = token.split('.')[1];
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    let jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    return JSON.parse(jsonPayload);
+}
+
+function getUserInfo() {
+    fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('User info:', data);
+        // data.id contains the Google user ID
+        // data.email contains the user's email
+        // data.name contains the user's name
+        // data.picture contains the URL to the user's profile picture
+        
+        // You can store or use this information as needed
+        const userId = data.id;
+        const userEmail = data.email;
+        
+        // Do something with the user information
+        displayUserInfo(data);
+    })
+    .catch(error => {
+        console.error('Error fetching user info:', error);
+    });
 }

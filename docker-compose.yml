@@ -15,6 +15,9 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_PASS=${RABBITMQ_DEFAULT_PASS}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - CLIENT_ID=${CLIENT_ID}
+      - TOKEN_URI=${TOKEN_URI}
     volumes:
       - ./media/in:/tmp/in
       - ./database:/database
