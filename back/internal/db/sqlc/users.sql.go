@@ -11,7 +11,7 @@ import (
 )
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, token) VALUES (?, ?)
+INSERT INTO users (id, token, subscription) VALUES (?, ?, "")
 `
 
 type CreateUserParams struct {
@@ -25,14 +25,28 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, token FROM users WHERE id = ? LIMIT 1
+SELECT id, token, subscription FROM users WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 	row := q.queryRow(ctx, q.getUserStmt, getUser, id)
 	var i User
-	err := row.Scan(&i.ID, &i.Token)
+	err := row.Scan(&i.ID, &i.Token, &i.Subscription)
 	return i, err
+}
+
+const updateUserSubscription = `-- name: UpdateUserSubscription :exec
+UPDATE users SET subscription = ? WHERE id = ?
+`
+
+type UpdateUserSubscriptionParams struct {
+	Subscription sql.NullString `json:"subscription"`
+	ID           string         `json:"id"`
+}
+
+func (q *Queries) UpdateUserSubscription(ctx context.Context, arg UpdateUserSubscriptionParams) error {
+	_, err := q.exec(ctx, q.updateUserSubscriptionStmt, updateUserSubscription, arg.Subscription, arg.ID)
+	return err
 }
 
 const updateUserToken = `-- name: UpdateUserToken :exec

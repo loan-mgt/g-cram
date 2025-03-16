@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"loan-mgt/g-cram/internal/config"
+	"loan-mgt/g-cram/internal/db"
 	"loan-mgt/g-cram/internal/server/ws"
 )
 
-func StartListener(ws *ws.WebSocketManager) {
+func StartListener(ws *ws.WebSocketManager, db *db.Store, cfg *config.Config) {
 
 	notification, err := NewAMQPConnection(config.New(), "notification")
 	if err != nil {
@@ -36,6 +37,11 @@ func StartListener(ws *ws.WebSocketManager) {
 		}
 		if err := ws.SendMessageToClient(payload.UserId, "Success"); err != nil {
 			fmt.Println("Error sending message to WebSocket:", err)
+		}
+
+		err = PushNotification(db, cfg, payload.UserId, fmt.Sprintf("Notification: %s", payload.Filename), "job-done:"+payload.Filename)
+		if err != nil {
+			fmt.Println("Error sending push notification:", err)
 		}
 
 	}

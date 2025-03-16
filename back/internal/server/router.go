@@ -55,6 +55,8 @@ func NewRouter(store *db.Store, amqpConn *service.AMQPConnection, ws *ws.WebSock
 		v1.POST("/get-video", apiHandler.GetVideo)
 		v1.POST("/start", apiHandler.Start)
 		v1.POST("/user", apiHandler.InitUser)
+		v1.POST("/user/:userId/subscription", apiHandler.AddSubscriptionToUser)
+		v1.DELETE("/user/:userId/subscription", apiHandler.RemoveSubscriptionFromUser)
 
 		v1.GET("/ws", apiHandler.WebSocket)
 	}

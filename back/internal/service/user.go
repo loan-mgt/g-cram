@@ -37,3 +37,25 @@ func UpdateOrCreateUser(ctx context.Context, db *db.Store, sub string, refreshTo
 
 	return nil
 }
+
+func AddSubscriptionToUser(ctx context.Context, db *db.Store, sub string, subscription string) error {
+	arg := sqlc.UpdateUserSubscriptionParams{
+		ID:           sub,
+		Subscription: sql.NullString{String: subscription, Valid: true},
+	}
+	if err := db.UpdateUserSubscription(ctx, arg); err != nil {
+		return fmt.Errorf("error updating user subscription: %w", err)
+	}
+	return nil
+}
+
+func RemoveSubscriptionFromUser(ctx context.Context, db *db.Store, sub string) error {
+	arg := sqlc.UpdateUserSubscriptionParams{
+		ID:           sub,
+		Subscription: sql.NullString{String: "", Valid: false},
+	}
+	if err := db.UpdateUserSubscription(ctx, arg); err != nil {
+		return fmt.Errorf("error updating user subscription: %w", err)
+	}
+	return nil
+}

@@ -1,7 +1,8 @@
 -- +migrate Up
 CREATE TABLE users (
     id TEXT PRIMARY KEY,
-    token TEXT
+    token TEXT,
+    subscription TEXT
 );
 CREATE INDEX idx_users_id ON users(id);
 

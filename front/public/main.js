@@ -1,5 +1,6 @@
 console.log('loaded')
 
+const VAPID_PUBLIC_KEY = 'BO3EJqTUc89-9Q7lhTk3ypUyLZ2Lp7l8LTk6XVWyl9HD3DhP8JE5SUAsoHKZqGbw2766xV5oM3ixJ-0UhRkLD5E';
 const base = 'https://photospicker.googleapis.com';
 const api = 'http://localhost:8090/api/v1';
 const mediaHolder = document.querySelector('#media-holder');
@@ -7,6 +8,8 @@ const loginButton = document.querySelector('#login-button');
 const pickerLink = document.querySelector('#picker');
 const pickerButton = document.querySelector('#picker2');
 const startButton = document.querySelector('#start');
+const notificationButton = document.querySelector('#notification');
+const serviceWorkerButton = document.querySelector('#service-worker');
 const urlFragment = window.location.hash;
 let sessionId;
 let pickerUri;
@@ -18,12 +21,22 @@ pickerButton.disable = true;
 pickerButton.addEventListener('click', function () {
     if (!picker) {
         picker = window.open(pickerUri, 'popup', 'width=600,height=600');
+        pullForImages();
     } else {
         picker.focus();
     }
 });
 
 startButton.addEventListener('click', startCompression);
+
+notificationButton.addEventListener('click', () => {
+    requestNotification();
+})
+
+serviceWorkerButton.addEventListener('click', () => {
+    registerServiceWorker();
+})
+
 
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -42,9 +55,9 @@ if (urlParams.has('code')) {
 
 if (localStorage.getItem('userId')) {
     getAccessToken()
-    .then( _ => {
-        logedIn();
-    })
+        .then(_ => {
+            logedIn();
+        })
 }
 
 function logedIn() {
@@ -64,16 +77,16 @@ function initUser(code) {
             code: code,
         })
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log('User response:', data);
-        localStorage.setItem('user_id', data.userId);
-        localStorage.setItem('user_name', data.userName);
-        localStorage.setItem('access_token', data.accessToken);
-    })
-    .catch(error => {
-        console.error('Error initializing user:', error);
-    });
+        .then(response => response.json())
+        .then(data => {
+            console.log('User response:', data);
+            localStorage.setItem('user_id', data.userId);
+            localStorage.setItem('user_name', data.userName);
+            localStorage.setItem('access_token', data.accessToken);
+        })
+        .catch(error => {
+            console.error('Error initializing user:', error);
+        });
 }
 
 function startWebSocket() {
@@ -100,8 +113,8 @@ function oauthSignIn() {
     var params = {
         'client_id': '949757780668-mptrdgdc2hfvdu5bul8t7boog88nbd07.apps.googleusercontent.com',
         'redirect_uri': 'http://localhost:8080/',
-        'response_type': 'code',  
-        'access_type': 'offline', 
+        'response_type': 'code',
+        'access_type': 'offline',
         'scope': 'https://www.googleapis.com/auth/photoslibrary https://www.googleapis.com/auth/photospicker.mediaitems.readonly',
         'include_granted_scopes': 'true',
         'state': 'pass-through value'
@@ -139,7 +152,7 @@ function disaplyContent() {
             pickerLink.href = responseData.pickerUri;
             sessionId = responseData.id;
 
-            pullForImages();
+
 
         })
 }
@@ -249,6 +262,8 @@ const loadVideoIntoVideo = (videoId, baseUrl) => {
 
 
 function startCompression() {
+    requestNotification();
+    registerServiceWorker();
     fetch(`${api}/start?id=${localStorage.getItem('user_id')}`, {
         method: 'POST',
         headers: {
@@ -295,27 +310,108 @@ function getUserInfo() {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('User info:', data);
+        })
+        .catch(error => {
+            console.error('Error fetching user info:', error);
+        });
+}
+
+function requestNotification() {
+    if (!("Notification" in window)) {
+        // Check if the browser supports notifications
+        alert("This browser does not support desktop notification");
+    } else {
+
+        Notification.requestPermission()
+            .then((permission) => {
+                console.log("Notification", permission);
+                if (permission === "granted") {
+                    new Notification("G-CRAM", {
+                        body: "Starting Compression",
+                    });
+                }
+            })
+    }
+}
+
+async function registerServiceWorker() {
+    if (!localStorage.getItem('user_id')) {
+        return
+    }
+
+    // Check if service workers and push are supported
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.error('Browser does not support service workers or push messages.');
+        return;
+    }
+
+    try {
+        // Register the service worker
+        const serviceWorkerRegistration = await navigator.serviceWorker.register('./public/service-worker.js');
+        console.info('Service worker was registered.');
+        console.info({ serviceWorkerRegistration });
+        let registration = serviceWorkerRegistration;
+
+        console.log(navigator.serviceWorker.controller, registration.pushManager)
+        if (!registration.pushManager) {
+            registration = await navigator.serviceWorker.ready;
         }
-        return response.json();
-    })
-    .then(data => {
-        console.log('User info:', data);
-        // data.id contains the Google user ID
-        // data.email contains the user's email
-        // data.name contains the user's name
-        // data.picture contains the URL to the user's profile picture
-        
-        // You can store or use this information as needed
-        const userId = data.id;
-        const userEmail = data.email;
-        
-        // Do something with the user information
-        displayUserInfo(data);
-    })
-    .catch(error => {
-        console.error('Error fetching user info:', error);
+
+        // Make sure the registration is complete before proceeding
+
+        // Check if already subscribed
+        const subscribed = await registration.pushManager.getSubscription();
+        if (subscribed) {
+            console.info('User is already subscribed.');
+            registration.update();
+            return;
+        }
+
+        // Subscribe the user
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: VAPID_PUBLIC_KEY
+        });
+
+        // Send the subscription to the server
+        await fetch(`${api}/user/${localStorage.getItem('user_id')}/subscription`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(subscription)
+        });
+
+        console.info('User subscription completed successfully.');
+    } catch (error) {
+        console.error('Error during service worker registration or push subscription:', error);
+    }
+}
+
+async function unsubscribeButtonHandler() {
+    // TODO
+    const registration = await navigator.serviceWorker.getRegistration();
+    const subscription = await registration.pushManager.getSubscription();
+    fetch(`${api}/user/${localStorage.getItem('user_id')}/subscription`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ endpoint: subscription.endpoint })
     });
+    const unsubscribed = await subscription.unsubscribe();
+    if (unsubscribed) {
+        console.info('Successfully unsubscribed from push notifications.');
+        unsubscribeButton.disabled = true;
+        subscribeButton.disabled = false;
+        notifyMeButton.disabled = true;
+    }
 }

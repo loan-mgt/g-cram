@@ -16,6 +16,7 @@ type Querier interface {
 	GetUser(ctx context.Context, id string) (User, error)
 	GetUserJobDetails(ctx context.Context, userID sql.NullString) ([]GetUserJobDetailsRow, error)
 	SetMediaDone(ctx context.Context, arg SetMediaDoneParams) error
+	UpdateUserSubscription(ctx context.Context, arg UpdateUserSubscriptionParams) error
 	UpdateUserToken(ctx context.Context, arg UpdateUserTokenParams) error
 }
 

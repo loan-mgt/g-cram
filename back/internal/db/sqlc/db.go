@@ -42,6 +42,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.setMediaDoneStmt, err = db.PrepareContext(ctx, setMediaDone); err != nil {
 		return nil, fmt.Errorf("error preparing query SetMediaDone: %w", err)
 	}
+	if q.updateUserSubscriptionStmt, err = db.PrepareContext(ctx, updateUserSubscription); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateUserSubscription: %w", err)
+	}
 	if q.updateUserTokenStmt, err = db.PrepareContext(ctx, updateUserToken); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateUserToken: %w", err)
 	}
@@ -78,6 +81,11 @@ func (q *Queries) Close() error {
 	if q.setMediaDoneStmt != nil {
 		if cerr := q.setMediaDoneStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing setMediaDoneStmt: %w", cerr)
+		}
+	}
+	if q.updateUserSubscriptionStmt != nil {
+		if cerr := q.updateUserSubscriptionStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateUserSubscriptionStmt: %w", cerr)
 		}
 	}
 	if q.updateUserTokenStmt != nil {
@@ -122,27 +130,29 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                    DBTX
-	tx                    *sql.Tx
-	createJobStmt         *sql.Stmt
-	createMediaStmt       *sql.Stmt
-	createUserStmt        *sql.Stmt
-	getUserStmt           *sql.Stmt
-	getUserJobDetailsStmt *sql.Stmt
-	setMediaDoneStmt      *sql.Stmt
-	updateUserTokenStmt   *sql.Stmt
+	db                         DBTX
+	tx                         *sql.Tx
+	createJobStmt              *sql.Stmt
+	createMediaStmt            *sql.Stmt
+	createUserStmt             *sql.Stmt
+	getUserStmt                *sql.Stmt
+	getUserJobDetailsStmt      *sql.Stmt
+	setMediaDoneStmt           *sql.Stmt
+	updateUserSubscriptionStmt *sql.Stmt
+	updateUserTokenStmt        *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                    tx,
-		tx:                    tx,
-		createJobStmt:         q.createJobStmt,
-		createMediaStmt:       q.createMediaStmt,
-		createUserStmt:        q.createUserStmt,
-		getUserStmt:           q.getUserStmt,
-		getUserJobDetailsStmt: q.getUserJobDetailsStmt,
-		setMediaDoneStmt:      q.setMediaDoneStmt,
-		updateUserTokenStmt:   q.updateUserTokenStmt,
+		db:                         tx,
+		tx:                         tx,
+		createJobStmt:              q.createJobStmt,
+		createMediaStmt:            q.createMediaStmt,
+		createUserStmt:             q.createUserStmt,
+		getUserStmt:                q.getUserStmt,
+		getUserJobDetailsStmt:      q.getUserJobDetailsStmt,
+		setMediaDoneStmt:           q.setMediaDoneStmt,
+		updateUserSubscriptionStmt: q.updateUserSubscriptionStmt,
+		updateUserTokenStmt:        q.updateUserTokenStmt,
 	}
 }
