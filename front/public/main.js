@@ -7,9 +7,6 @@ const mediaHolder = document.querySelector('#media-holder');
 const loginButton = document.querySelector('#login-button');
 const pickerLink = document.querySelector('#picker');
 const pickerButton = document.querySelector('#picker2');
-const startButton = document.querySelector('#start');
-const notificationButton = document.querySelector('#notification');
-const serviceWorkerButton = document.querySelector('#service-worker');
 const urlFragment = window.location.hash;
 let sessionId;
 let pickerUri;
@@ -27,17 +24,6 @@ pickerButton.addEventListener('click', function () {
     }
 });
 
-startButton.addEventListener('click', startCompression);
-
-notificationButton.addEventListener('click', () => {
-    requestNotification();
-})
-
-serviceWorkerButton.addEventListener('click', () => {
-    registerServiceWorker();
-})
-
-
 
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has('code')) {
@@ -46,7 +32,7 @@ if (urlParams.has('code')) {
     initUser(code);
     window.history.replaceState({}, '', '/');
     logedIn();
-} else {
+} else if (urlParams.has('error')) {
     const error = urlParams.get('error');
     if (error) {
         console.error("OAuth 2.0 flow error:", error);
@@ -82,6 +68,7 @@ function initUser(code) {
             console.log('User response:', data);
             localStorage.setItem('user_id', data.userId);
             localStorage.setItem('user_name', data.userName);
+            localStorage.setItem('user_mail', data.userMail);
             localStorage.setItem('access_token', data.accessToken);
         })
         .catch(error => {
@@ -117,8 +104,11 @@ function oauthSignIn() {
         'access_type': 'offline',
         'scope': 'https://www.googleapis.com/auth/photoslibrary https://www.googleapis.com/auth/photospicker.mediaitems.readonly',
         'include_granted_scopes': 'true',
-        'state': 'pass-through value'
+        'state': 'pass-through value',
+        'login_hint': localStorage.getItem('user_mail')
     };
+
+
 
     // Add form parameters as hidden input values.
     for (var p in params) {

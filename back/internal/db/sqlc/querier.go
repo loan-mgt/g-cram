@@ -14,6 +14,7 @@ type Querier interface {
 	CreateMedia(ctx context.Context, arg CreateMediaParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	GetUser(ctx context.Context, id string) (User, error)
+	GetUserByTokenHash(ctx context.Context, tokenHash sql.NullString) (User, error)
 	GetUserJobDetails(ctx context.Context, userID sql.NullString) ([]GetUserJobDetailsRow, error)
 	SetMediaDone(ctx context.Context, arg SetMediaDoneParams) error
 	UpdateUserSubscription(ctx context.Context, arg UpdateUserSubscriptionParams) error

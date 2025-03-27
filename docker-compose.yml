@@ -21,6 +21,9 @@ services:
       - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
       - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
       - VAPID_SUBJECT=${VAPID_SUBJECT}
+      - SALT=${SALT}
+      - FRONT_URL=${FRONT_URL}
+      - FRONT_DOMAIN=${FRONT_DOMAIN}
     volumes:
       - ./media/in:/tmp/in
       - ./database:/database

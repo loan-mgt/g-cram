@@ -15,12 +15,14 @@ type Config struct {
 	RabbitMQPass    string
 	DBPath          string
 	FrontUrl        string
+	FrontDomain     string
 	ClientSecret    string
 	ClientID        string
 	TokenURI        string
 	VAPIDPublicKey  string
 	VAPIDPrivateKey string
 	VAPIDSubject    string
+	Salt            string
 }
 
 // New returns a new Config with values from environment variables or defaults
@@ -34,12 +36,14 @@ func New() *Config {
 		RabbitMQPass:    getEnv("RABBITMQ_PASS", "guest"),
 		DBPath:          getEnv("DB_PATH", "/database/g-cram.db"),
 		FrontUrl:        getEnv("FRONT_URL", "http://localhost:8080"),
+		FrontDomain:     getEnv("FRONT_DOMAIN", "localhost"),
 		ClientSecret:    getEnv("CLIENT_SECRET", ""),
 		ClientID:        getEnv("CLIENT_ID", ""),
 		TokenURI:        getEnv("TOKEN_URI", "https://oauth2.googleapis.com/token"),
 		VAPIDPublicKey:  getEnv("VAPID_PUBLIC_KEY", ""),
 		VAPIDPrivateKey: getEnv("VAPID_PRIVATE_KEY", ""),
 		VAPIDSubject:    getEnv("VAPID_SUBJECT", ""),
+		Salt:            getEnv("SALT", ""),
 	}
 }
 

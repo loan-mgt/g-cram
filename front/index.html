@@ -21,14 +21,16 @@
     <a id="picker" target="_blank">picker</a>
     <button id="picker2">picker</button>
 
-    <button id="notification">notification</button>
-    <button id="service-worker">service-worker</button>
+    <button onclick="requestNotification()">notification</button>
+    <button onclick="registerServiceWorker()">service-worker</button>
 
 
     <div id="media-holder">
 
     </div>
-    <button id="start">start compression</button>
+    <button onclick="startCompression()">start compression</button>
 </body>
+<script src="/public/alpine.min.js" defer></script>
 <script src="/public/main.js"></script>
+
 </html>

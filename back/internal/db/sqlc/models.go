@@ -27,5 +27,6 @@ type Medium struct {
 type User struct {
 	ID           string         `json:"id"`
 	Token        sql.NullString `json:"token"`
+	TokenHash    sql.NullString `json:"token_hash"`
 	Subscription sql.NullString `json:"subscription"`
 }

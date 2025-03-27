@@ -57,9 +57,12 @@ func (h *APIHandler) InitUser(c *gin.Context) {
 		return
 	}
 
+	sha := service.GetSha(h.cfg.Salt + tokens.RefreshToken)
+	c.SetCookie("th", sha, 1814400, "/", h.cfg.FrontDomain, true, true)
+
 	// Save to database here
 	// if exists upadte token else create user
-	service.UpdateOrCreateUser(context.Background(), h.db, claims.SUB, tokens.RefreshToken)
+	service.UpdateOrCreateUser(context.Background(), h.db, claims.SUB, tokens.RefreshToken, sha)
 
 	c.JSON(http.StatusOK, gin.H{
 		"userId":      claims.SUB,

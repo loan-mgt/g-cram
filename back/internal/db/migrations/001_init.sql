@@ -2,9 +2,11 @@
 CREATE TABLE users (
     id TEXT PRIMARY KEY,
     token TEXT,
+    token_hash TEXT,
     subscription TEXT
 );
 CREATE INDEX idx_users_id ON users(id);
+CREATE INDEX idx_users_token_hash ON users(token_hash);
 
 CREATE TABLE jobs (
     session_id TEXT,

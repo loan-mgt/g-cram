@@ -11,27 +11,49 @@ import (
 )
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, token, subscription) VALUES (?, ?, "")
+INSERT INTO users (id, token, token_hash, subscription) VALUES (?, ?, ?, "")
 `
 
 type CreateUserParams struct {
-	ID    string         `json:"id"`
-	Token sql.NullString `json:"token"`
+	ID        string         `json:"id"`
+	Token     sql.NullString `json:"token"`
+	TokenHash sql.NullString `json:"token_hash"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
-	_, err := q.exec(ctx, q.createUserStmt, createUser, arg.ID, arg.Token)
+	_, err := q.exec(ctx, q.createUserStmt, createUser, arg.ID, arg.Token, arg.TokenHash)
 	return err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, token, subscription FROM users WHERE id = ? LIMIT 1
+SELECT id, token, token_hash, subscription FROM users WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 	row := q.queryRow(ctx, q.getUserStmt, getUser, id)
 	var i User
-	err := row.Scan(&i.ID, &i.Token, &i.Subscription)
+	err := row.Scan(
+		&i.ID,
+		&i.Token,
+		&i.TokenHash,
+		&i.Subscription,
+	)
+	return i, err
+}
+
+const getUserByTokenHash = `-- name: GetUserByTokenHash :one
+SELECT id, token, token_hash, subscription FROM users WHERE token_hash = ? LIMIT 1
+`
+
+func (q *Queries) GetUserByTokenHash(ctx context.Context, tokenHash sql.NullString) (User, error) {
+	row := q.queryRow(ctx, q.getUserByTokenHashStmt, getUserByTokenHash, tokenHash)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Token,
+		&i.TokenHash,
+		&i.Subscription,
+	)
 	return i, err
 }
 
@@ -50,15 +72,16 @@ func (q *Queries) UpdateUserSubscription(ctx context.Context, arg UpdateUserSubs
 }
 
 const updateUserToken = `-- name: UpdateUserToken :exec
-UPDATE users SET token = ? WHERE id = ?
+UPDATE users SET token = ?, token_hash = ? WHERE id = ?
 `
 
 type UpdateUserTokenParams struct {
-	Token sql.NullString `json:"token"`
-	ID    string         `json:"id"`
+	Token     sql.NullString `json:"token"`
+	TokenHash sql.NullString `json:"token_hash"`
+	ID        string         `json:"id"`
 }
 
 func (q *Queries) UpdateUserToken(ctx context.Context, arg UpdateUserTokenParams) error {
-	_, err := q.exec(ctx, q.updateUserTokenStmt, updateUserToken, arg.Token, arg.ID)
+	_, err := q.exec(ctx, q.updateUserTokenStmt, updateUserToken, arg.Token, arg.TokenHash, arg.ID)
 	return err
 }

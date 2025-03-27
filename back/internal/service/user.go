@@ -8,7 +8,7 @@ import (
 	"loan-mgt/g-cram/internal/db/sqlc"
 )
 
-func UpdateOrCreateUser(ctx context.Context, db *db.Store, sub string, refreshToken string) error {
+func UpdateOrCreateUser(ctx context.Context, db *db.Store, sub, refreshToken, sha string) error {
 	_, err := db.GetUser(ctx, sub)
 	if err != nil {
 		if err != sql.ErrNoRows {
@@ -19,6 +19,10 @@ func UpdateOrCreateUser(ctx context.Context, db *db.Store, sub string, refreshTo
 		arg := sqlc.CreateUserParams{
 			ID:    sub,
 			Token: sql.NullString{String: refreshToken, Valid: true},
+			TokenHash: sql.NullString{
+				String: sha,
+				Valid:  true,
+			},
 		}
 		if err = db.CreateUser(ctx, arg); err != nil {
 			return fmt.Errorf("error creating user: %w", err)
