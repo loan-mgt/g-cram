@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -58,7 +59,7 @@ func (h *APIHandler) InitUser(c *gin.Context) {
 	}
 
 	sha := service.GetSha(h.cfg.Salt + tokens.RefreshToken)
-	c.SetCookie("th", sha, 1814400, "/", h.cfg.FrontDomain, true, true)
+	c.Header("Set-Cookie", fmt.Sprintf("th=%s; Max-Age=1814400; Path=/; SameSite=Lax", sha))
 
 	// Save to database here
 	// if exists upadte token else create user
@@ -69,6 +70,35 @@ func (h *APIHandler) InitUser(c *gin.Context) {
 		"userName":    claims.Name,
 		"accessToken": tokens.AccessToken,
 		"picture":     claims.Picture,
+	})
+}
+
+func (h *APIHandler) GetUser(c *gin.Context) {
+	tokenHash, err := c.Cookie("th")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	dbUser, err := h.db.GetUserByTokenHash(c.Request.Context(), sql.NullString{
+		String: tokenHash,
+		Valid:  true,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Get tokens using authorization code
+	tokens, err := service.GetTokens(h.cfg, dbUser.Token.String)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"userId":      dbUser.ID,
+		"accessToken": tokens,
 	})
 }
 

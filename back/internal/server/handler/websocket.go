@@ -51,7 +51,7 @@ func (h *APIHandler) WebSocket(c *gin.Context) {
 	h.wsManager.AddClient(id, conn)
 
 	// Send welcome message
-	if err = conn.WriteMessage(websocket.TextMessage, []byte("Hello from cramer")); err != nil {
+	if err = conn.WriteMessage(websocket.TextMessage, []byte("{\"msg\": \"Hello from cramer\"}")); err != nil {
 		log.Println("WebSocket write error:", err)
 		h.wsManager.RemoveClient(id)
 		conn.Close()

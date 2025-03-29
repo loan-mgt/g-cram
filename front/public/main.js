@@ -24,33 +24,44 @@ pickerButton.addEventListener('click', function () {
     }
 });
 
-
+// handle ongoing OAuth 2.0 flow
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has('code')) {
     const code = urlParams.get('code');
 
     initUser(code);
     window.history.replaceState({}, '', '/');
-    logedIn();
 } else if (urlParams.has('error')) {
     const error = urlParams.get('error');
     if (error) {
         console.error("OAuth 2.0 flow error:", error);
     }
+} else {
+    // currently logged in
+    if (localStorage.getItem('name')) {
+        getCurrentUser()
+    }
 }
 
-if (localStorage.getItem('userId')) {
-    getAccessToken()
-        .then(_ => {
-            logedIn();
-        })
-}
 
+
+// user is loged in
 function logedIn() {
     loginButton.style.display = 'none';
     startWebSocket();
     disaplyContent();
     getUserInfo();
+}
+
+function storeUserData(data) {
+    console.log('User response:', data);
+    if (data.userId !== undefined) localStorage.setItem('user_id', data.userId);
+    if (data.id !== undefined) localStorage.setItem('user_id', data.id);
+    if (data.userName !== undefined) localStorage.setItem('name', data.userName);
+    if (data.name !== undefined) localStorage.setItem('name', data.name);
+    if (data.picture !== undefined) localStorage.setItem('picture', data.picture);
+    if (data.email !== undefined) localStorage.setItem('email', data.email);
+    if (data.accessToken !== undefined) localStorage.setItem('access_token', data.accessToken);
 }
 
 function initUser(code) {
@@ -65,20 +76,37 @@ function initUser(code) {
     })
         .then(response => response.json())
         .then(data => {
-            console.log('User response:', data);
-            localStorage.setItem('user_id', data.userId);
-            localStorage.setItem('user_name', data.userName);
-            localStorage.setItem('user_mail', data.userMail);
-            localStorage.setItem('access_token', data.accessToken);
+            storeUserData(data);
+            logedIn();
         })
         .catch(error => {
             console.error('Error initializing user:', error);
         });
 }
 
-function startWebSocket() {
-    const clientId = 'bob'
 
+async function getCurrentUser() {
+    return fetch(api + '/user', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+        .then(response => response.json())
+        .then(data => {
+            storeUserData(data);
+            logedIn();
+        })
+        .catch(error => {
+            console.error('Error initializing user:', error);
+        });
+}
+
+
+
+
+function startWebSocket() {
     const ws = new WebSocket(`ws://localhost:8090/api/v1/ws?token=${localStorage.getItem('access_token')}&id=${localStorage.getItem('user_id')}`);
 
     ws.onmessage = function (event) {
@@ -104,10 +132,13 @@ function oauthSignIn() {
         'access_type': 'offline',
         'scope': 'https://www.googleapis.com/auth/photoslibrary https://www.googleapis.com/auth/photospicker.mediaitems.readonly',
         'include_granted_scopes': 'true',
-        'state': 'pass-through value',
-        'login_hint': localStorage.getItem('user_mail')
+        'state': 'pass-through value'
     };
 
+    let userMail = localStorage.getItem('email')
+    if (userMail !== null && userMail !== undefined) {
+        params.login_hint = userMail;
+    }
 
 
     // Add form parameters as hidden input values.
@@ -272,27 +303,6 @@ function startCompression() {
             console.log('responseData', responseData)
         });
 }
-function loginSuccess(response) {
-    console.log('loginSuccess')
-    const responsePayload = decodeJwtResponse(response.credential);
-
-    console.log("ID: " + responsePayload.sub);
-    console.log('Full Name: ' + responsePayload.name);
-    console.log('Given Name: ' + responsePayload.given_name);
-    console.log('Family Name: ' + responsePayload.family_name);
-    console.log("Image URL: " + responsePayload.picture);
-    console.log("Email: " + responsePayload.email);
-
-}
-function decodeJwtResponse(token) {
-    let base64Url = token.split('.')[1];
-    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    let jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-
-    return JSON.parse(jsonPayload);
-}
 
 function getUserInfo() {
     fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -308,6 +318,7 @@ function getUserInfo() {
         })
         .then(data => {
             console.log('User info:', data);
+            storeUserData(data);
         })
         .catch(error => {
             console.error('Error fetching user info:', error);
@@ -404,4 +415,9 @@ async function unsubscribeButtonHandler() {
         subscribeButton.disabled = false;
         notifyMeButton.disabled = true;
     }
+}
+
+function logout() {
+    localStorage.clear();
+    location.reload();
 }
