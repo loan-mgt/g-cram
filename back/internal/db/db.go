@@ -27,7 +27,7 @@ func NewStore(cfg *config.Config) *Store {
 
 	db, err := sql.Open("sqlite3", cfg.DBPath)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect to database: %v %s", err, cfg.DBPath)
 	}
 
 	n, err := migrate.Exec(db, "sqlite3", migrations, migrate.Up)
