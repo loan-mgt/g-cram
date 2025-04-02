@@ -59,7 +59,7 @@ func (h *APIHandler) InitUser(c *gin.Context) {
 	}
 
 	sha := service.GetSha(h.cfg.Salt + tokens.RefreshToken)
-	c.Header("Set-Cookie", fmt.Sprintf("th=%s; Max-Age=1814400; Path=/; SameSite=Lax", sha))
+	c.Header("Set-Cookie", fmt.Sprintf("th=%s; Max-Age=1814400; SameSite=None; Secure", sha))
 
 	// Save to database here
 	// if exists upadte token else create user
