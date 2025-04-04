@@ -10,13 +10,16 @@ import (
 )
 
 type Querier interface {
-	CreateJob(ctx context.Context, arg CreateJobParams) error
+	CreateJob(ctx context.Context, userID string) error
 	CreateMedia(ctx context.Context, arg CreateMediaParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
+	GetMedias(ctx context.Context, arg GetMediasParams) ([]Medium, error)
 	GetUser(ctx context.Context, id string) (User, error)
 	GetUserByTokenHash(ctx context.Context, tokenHash sql.NullString) (User, error)
-	GetUserJobDetails(ctx context.Context, userID sql.NullString) ([]GetUserJobDetailsRow, error)
+	GetUserJobDetails(ctx context.Context, userID string) ([]GetUserJobDetailsRow, error)
+	RemoveMedia(ctx context.Context, mediaID string) error
 	SetMediaDone(ctx context.Context, arg SetMediaDoneParams) error
+	SetMediaTimestamp(ctx context.Context, arg SetMediaTimestampParams) error
 	UpdateUserSubscription(ctx context.Context, arg UpdateUserSubscriptionParams) error
 	UpdateUserToken(ctx context.Context, arg UpdateUserTokenParams) error
 }

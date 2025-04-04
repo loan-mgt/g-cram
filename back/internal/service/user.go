@@ -9,6 +9,7 @@ import (
 )
 
 func UpdateOrCreateUser(ctx context.Context, db *db.Store, sub, refreshToken, sha string) error {
+	fmt.Println("Updating or creating user... token hash: ", sha)
 	_, err := db.GetUser(ctx, sub)
 	if err != nil {
 		if err != sql.ErrNoRows {
@@ -34,6 +35,10 @@ func UpdateOrCreateUser(ctx context.Context, db *db.Store, sub, refreshToken, sh
 	arg := sqlc.UpdateUserTokenParams{
 		ID:    sub,
 		Token: sql.NullString{String: refreshToken, Valid: true},
+		TokenHash: sql.NullString{
+			String: sha,
+			Valid:  true,
+		},
 	}
 	if err = db.UpdateUserToken(ctx, arg); err != nil {
 		return fmt.Errorf("error updating user token: %w", err)

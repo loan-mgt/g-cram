@@ -33,6 +33,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
 	}
+	if q.getMediasStmt, err = db.PrepareContext(ctx, getMedias); err != nil {
+		return nil, fmt.Errorf("error preparing query GetMedias: %w", err)
+	}
 	if q.getUserStmt, err = db.PrepareContext(ctx, getUser); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUser: %w", err)
 	}
@@ -42,8 +45,14 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getUserJobDetailsStmt, err = db.PrepareContext(ctx, getUserJobDetails); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserJobDetails: %w", err)
 	}
+	if q.removeMediaStmt, err = db.PrepareContext(ctx, removeMedia); err != nil {
+		return nil, fmt.Errorf("error preparing query RemoveMedia: %w", err)
+	}
 	if q.setMediaDoneStmt, err = db.PrepareContext(ctx, setMediaDone); err != nil {
 		return nil, fmt.Errorf("error preparing query SetMediaDone: %w", err)
+	}
+	if q.setMediaTimestampStmt, err = db.PrepareContext(ctx, setMediaTimestamp); err != nil {
+		return nil, fmt.Errorf("error preparing query SetMediaTimestamp: %w", err)
 	}
 	if q.updateUserSubscriptionStmt, err = db.PrepareContext(ctx, updateUserSubscription); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateUserSubscription: %w", err)
@@ -71,6 +80,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createUserStmt: %w", cerr)
 		}
 	}
+	if q.getMediasStmt != nil {
+		if cerr := q.getMediasStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getMediasStmt: %w", cerr)
+		}
+	}
 	if q.getUserStmt != nil {
 		if cerr := q.getUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getUserStmt: %w", cerr)
@@ -86,9 +100,19 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getUserJobDetailsStmt: %w", cerr)
 		}
 	}
+	if q.removeMediaStmt != nil {
+		if cerr := q.removeMediaStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing removeMediaStmt: %w", cerr)
+		}
+	}
 	if q.setMediaDoneStmt != nil {
 		if cerr := q.setMediaDoneStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing setMediaDoneStmt: %w", cerr)
+		}
+	}
+	if q.setMediaTimestampStmt != nil {
+		if cerr := q.setMediaTimestampStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing setMediaTimestampStmt: %w", cerr)
 		}
 	}
 	if q.updateUserSubscriptionStmt != nil {
@@ -143,10 +167,13 @@ type Queries struct {
 	createJobStmt              *sql.Stmt
 	createMediaStmt            *sql.Stmt
 	createUserStmt             *sql.Stmt
+	getMediasStmt              *sql.Stmt
 	getUserStmt                *sql.Stmt
 	getUserByTokenHashStmt     *sql.Stmt
 	getUserJobDetailsStmt      *sql.Stmt
+	removeMediaStmt            *sql.Stmt
 	setMediaDoneStmt           *sql.Stmt
+	setMediaTimestampStmt      *sql.Stmt
 	updateUserSubscriptionStmt *sql.Stmt
 	updateUserTokenStmt        *sql.Stmt
 }
@@ -158,10 +185,13 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createJobStmt:              q.createJobStmt,
 		createMediaStmt:            q.createMediaStmt,
 		createUserStmt:             q.createUserStmt,
+		getMediasStmt:              q.getMediasStmt,
 		getUserStmt:                q.getUserStmt,
 		getUserByTokenHashStmt:     q.getUserByTokenHashStmt,
 		getUserJobDetailsStmt:      q.getUserJobDetailsStmt,
+		removeMediaStmt:            q.removeMediaStmt,
 		setMediaDoneStmt:           q.setMediaDoneStmt,
+		setMediaTimestampStmt:      q.setMediaTimestampStmt,
 		updateUserSubscriptionStmt: q.updateUserSubscriptionStmt,
 		updateUserTokenStmt:        q.updateUserTokenStmt,
 	}

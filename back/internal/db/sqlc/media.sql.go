@@ -11,12 +11,13 @@ import (
 )
 
 const createMedia = `-- name: CreateMedia :exec
-INSERT INTO media (session_id, media_id, creation_date, filename, old_size, new_size, done) VALUES (?, ?, ?, ?, ?, ?, ?)
+INSERT INTO media (user_id, timestamp, media_id, creation_date, filename, old_size, new_size, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateMediaParams struct {
-	SessionID    sql.NullString `json:"session_id"`
-	MediaID      sql.NullString `json:"media_id"`
+	UserID       string         `json:"user_id"`
+	Timestamp    sql.NullInt64  `json:"timestamp"`
+	MediaID      string         `json:"media_id"`
 	CreationDate sql.NullInt64  `json:"creation_date"`
 	Filename     sql.NullString `json:"filename"`
 	OldSize      sql.NullInt64  `json:"old_size"`
@@ -26,7 +27,8 @@ type CreateMediaParams struct {
 
 func (q *Queries) CreateMedia(ctx context.Context, arg CreateMediaParams) error {
 	_, err := q.exec(ctx, q.createMediaStmt, createMedia,
-		arg.SessionID,
+		arg.UserID,
+		arg.Timestamp,
 		arg.MediaID,
 		arg.CreationDate,
 		arg.Filename,
@@ -37,17 +39,82 @@ func (q *Queries) CreateMedia(ctx context.Context, arg CreateMediaParams) error 
 	return err
 }
 
+const getMedias = `-- name: GetMedias :many
+SELECT user_id, timestamp, media_id, creation_date, filename, old_size, new_size, done FROM media WHERE user_id = ? and timestamp = ?
+`
+
+type GetMediasParams struct {
+	UserID    string        `json:"user_id"`
+	Timestamp sql.NullInt64 `json:"timestamp"`
+}
+
+func (q *Queries) GetMedias(ctx context.Context, arg GetMediasParams) ([]Medium, error) {
+	rows, err := q.query(ctx, q.getMediasStmt, getMedias, arg.UserID, arg.Timestamp)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Medium
+	for rows.Next() {
+		var i Medium
+		if err := rows.Scan(
+			&i.UserID,
+			&i.Timestamp,
+			&i.MediaID,
+			&i.CreationDate,
+			&i.Filename,
+			&i.OldSize,
+			&i.NewSize,
+			&i.Done,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const removeMedia = `-- name: RemoveMedia :exec
+DELETE FROM media WHERE media_id = ?
+`
+
+func (q *Queries) RemoveMedia(ctx context.Context, mediaID string) error {
+	_, err := q.exec(ctx, q.removeMediaStmt, removeMedia, mediaID)
+	return err
+}
+
 const setMediaDone = `-- name: SetMediaDone :exec
 UPDATE media SET done = ?, new_size = ? WHERE media_id = ?
 `
 
 type SetMediaDoneParams struct {
-	Done    sql.NullInt64  `json:"done"`
-	NewSize sql.NullInt64  `json:"new_size"`
-	MediaID sql.NullString `json:"media_id"`
+	Done    sql.NullInt64 `json:"done"`
+	NewSize sql.NullInt64 `json:"new_size"`
+	MediaID string        `json:"media_id"`
 }
 
 func (q *Queries) SetMediaDone(ctx context.Context, arg SetMediaDoneParams) error {
 	_, err := q.exec(ctx, q.setMediaDoneStmt, setMediaDone, arg.Done, arg.NewSize, arg.MediaID)
+	return err
+}
+
+const setMediaTimestamp = `-- name: SetMediaTimestamp :exec
+UPDATE media SET timestamp = ? WHERE media_id = ? and user_id = ?
+`
+
+type SetMediaTimestampParams struct {
+	Timestamp sql.NullInt64 `json:"timestamp"`
+	MediaID   string        `json:"media_id"`
+	UserID    string        `json:"user_id"`
+}
+
+func (q *Queries) SetMediaTimestamp(ctx context.Context, arg SetMediaTimestampParams) error {
+	_, err := q.exec(ctx, q.setMediaTimestampStmt, setMediaTimestamp, arg.Timestamp, arg.MediaID, arg.UserID)
 	return err
 }

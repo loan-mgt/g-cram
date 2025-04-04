@@ -11,39 +11,29 @@ import (
 )
 
 const createJob = `-- name: CreateJob :exec
-INSERT INTO jobs (session_id, user_id, timestamp) VALUES (?, ?, CURRENT_TIMESTAMP)
+INSERT INTO jobs (user_id, timestamp) VALUES (?, CURRENT_TIMESTAMP)
 `
 
-type CreateJobParams struct {
-	SessionID sql.NullString `json:"session_id"`
-	UserID    sql.NullString `json:"user_id"`
-}
-
-func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) error {
-	_, err := q.exec(ctx, q.createJobStmt, createJob, arg.SessionID, arg.UserID)
+func (q *Queries) CreateJob(ctx context.Context, userID string) error {
+	_, err := q.exec(ctx, q.createJobStmt, createJob, userID)
 	return err
 }
 
 const getUserJobDetails = `-- name: GetUserJobDetails :many
-SELECT jobs.session_id, user_id, timestamp, media.session_id, media_id, creation_date, filename, old_size, new_size, done FROM jobs
-LEFT JOIN media ON jobs.session_id = media.session_id
- WHERE user_id = ?
+SELECT jobs.timestamp, SUM(media.new_size) as sum_new_size, SUM(media.old_size) as sum_old_size, COUNT(media.done) as count_done FROM jobs
+LEFT JOIN media ON jobs.user_id = media.user_id AND jobs.timestamp = media.timestamp
+ WHERE jobs.user_id = ?
+ ORDER BY jobs.timestamp DESC
 `
 
 type GetUserJobDetailsRow struct {
-	SessionID    sql.NullString `json:"session_id"`
-	UserID       sql.NullString `json:"user_id"`
-	Timestamp    sql.NullInt64  `json:"timestamp"`
-	SessionID_2  sql.NullString `json:"session_id_2"`
-	MediaID      sql.NullString `json:"media_id"`
-	CreationDate sql.NullInt64  `json:"creation_date"`
-	Filename     sql.NullString `json:"filename"`
-	OldSize      sql.NullInt64  `json:"old_size"`
-	NewSize      sql.NullInt64  `json:"new_size"`
-	Done         sql.NullInt64  `json:"done"`
+	Timestamp  int64           `json:"timestamp"`
+	SumNewSize sql.NullFloat64 `json:"sum_new_size"`
+	SumOldSize sql.NullFloat64 `json:"sum_old_size"`
+	CountDone  int64           `json:"count_done"`
 }
 
-func (q *Queries) GetUserJobDetails(ctx context.Context, userID sql.NullString) ([]GetUserJobDetailsRow, error) {
+func (q *Queries) GetUserJobDetails(ctx context.Context, userID string) ([]GetUserJobDetailsRow, error) {
 	rows, err := q.query(ctx, q.getUserJobDetailsStmt, getUserJobDetails, userID)
 	if err != nil {
 		return nil, err
@@ -53,16 +43,10 @@ func (q *Queries) GetUserJobDetails(ctx context.Context, userID sql.NullString) 
 	for rows.Next() {
 		var i GetUserJobDetailsRow
 		if err := rows.Scan(
-			&i.SessionID,
-			&i.UserID,
 			&i.Timestamp,
-			&i.SessionID_2,
-			&i.MediaID,
-			&i.CreationDate,
-			&i.Filename,
-			&i.OldSize,
-			&i.NewSize,
-			&i.Done,
+			&i.SumNewSize,
+			&i.SumOldSize,
+			&i.CountDone,
 		); err != nil {
 			return nil, err
 		}

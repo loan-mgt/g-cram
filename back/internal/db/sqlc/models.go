@@ -9,14 +9,14 @@ import (
 )
 
 type Job struct {
-	SessionID sql.NullString `json:"session_id"`
-	UserID    sql.NullString `json:"user_id"`
-	Timestamp sql.NullInt64  `json:"timestamp"`
+	UserID    string `json:"user_id"`
+	Timestamp int64  `json:"timestamp"`
 }
 
 type Medium struct {
-	SessionID    sql.NullString `json:"session_id"`
-	MediaID      sql.NullString `json:"media_id"`
+	UserID       string         `json:"user_id"`
+	Timestamp    sql.NullInt64  `json:"timestamp"`
+	MediaID      string         `json:"media_id"`
 	CreationDate sql.NullInt64  `json:"creation_date"`
 	Filename     sql.NullString `json:"filename"`
 	OldSize      sql.NullInt64  `json:"old_size"`
