@@ -10,6 +10,7 @@ import (
 )
 
 type Querier interface {
+	ClearUserTmpMedia(ctx context.Context, userID string) error
 	CreateJob(ctx context.Context, userID string) error
 	CreateMedia(ctx context.Context, arg CreateMediaParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error

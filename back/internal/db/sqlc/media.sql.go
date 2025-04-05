@@ -10,6 +10,15 @@ import (
 	"database/sql"
 )
 
+const clearUserTmpMedia = `-- name: ClearUserTmpMedia :exec
+DELETE FROM media WHERE user_id = ? and timestamp = NULL
+`
+
+func (q *Queries) ClearUserTmpMedia(ctx context.Context, userID string) error {
+	_, err := q.exec(ctx, q.clearUserTmpMediaStmt, clearUserTmpMedia, userID)
+	return err
+}
+
 const createMedia = `-- name: CreateMedia :exec
 INSERT INTO media (user_id, timestamp, media_id, creation_date, filename, old_size, new_size, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `

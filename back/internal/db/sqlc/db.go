@@ -24,6 +24,9 @@ func New(db DBTX) *Queries {
 func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	q := Queries{db: db}
 	var err error
+	if q.clearUserTmpMediaStmt, err = db.PrepareContext(ctx, clearUserTmpMedia); err != nil {
+		return nil, fmt.Errorf("error preparing query ClearUserTmpMedia: %w", err)
+	}
 	if q.createJobStmt, err = db.PrepareContext(ctx, createJob); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateJob: %w", err)
 	}
@@ -65,6 +68,11 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 
 func (q *Queries) Close() error {
 	var err error
+	if q.clearUserTmpMediaStmt != nil {
+		if cerr := q.clearUserTmpMediaStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing clearUserTmpMediaStmt: %w", cerr)
+		}
+	}
 	if q.createJobStmt != nil {
 		if cerr := q.createJobStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createJobStmt: %w", cerr)
@@ -164,6 +172,7 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 type Queries struct {
 	db                         DBTX
 	tx                         *sql.Tx
+	clearUserTmpMediaStmt      *sql.Stmt
 	createJobStmt              *sql.Stmt
 	createMediaStmt            *sql.Stmt
 	createUserStmt             *sql.Stmt
@@ -182,6 +191,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
 		db:                         tx,
 		tx:                         tx,
+		clearUserTmpMediaStmt:      q.clearUserTmpMediaStmt,
 		createJobStmt:              q.createJobStmt,
 		createMediaStmt:            q.createMediaStmt,
 		createUserStmt:             q.createUserStmt,

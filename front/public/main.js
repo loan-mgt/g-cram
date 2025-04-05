@@ -13,6 +13,7 @@ let sessionId;
 let pickerUri;
 let picker;
 let mediaItems;
+let pullForImagesTimeout;
 pickerButton.disable = true;
 
 pickerButton.addEventListener("click", function () {
@@ -190,7 +191,7 @@ function pullForImages() {
         console.log("ended", responseData.mediaItemsSet);
         fetchMediaItems(sessionId, localStorage.getItem("access_token"));
       } else {
-        setTimeout(() => pullForImages(), 5000);
+        pullForImagesTimeout = setTimeout(() => pullForImages(), 5000);
       }
     });
 }

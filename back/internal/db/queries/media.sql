@@ -7,6 +7,9 @@ UPDATE media SET done = ?, new_size = ? WHERE media_id = ?;
 -- name: RemoveMedia :exec
 DELETE FROM media WHERE media_id = ?;
 
+-- name: ClearUserTmpMedia :exec
+DELETE FROM media WHERE user_id = ? and timestamp = NULL;
+
 -- name: GetMedias :many
 SELECT * FROM media WHERE user_id = ? and timestamp = ?;
 

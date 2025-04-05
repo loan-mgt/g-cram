@@ -2,10 +2,10 @@ package handler
 
 import (
 	"context"
-	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"loan-mgt/g-cram/internal/db/sqlc"
 	"loan-mgt/g-cram/internal/service"
 	"net/http"
 	"strings"
@@ -47,14 +47,14 @@ func (h *APIHandler) InitUser(c *gin.Context) {
 	// Get tokens using authorization code
 	tokens, err := service.GetTokens(h.cfg, payload.Code)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// Extract user info from ID token
 	claims, err := extractUserInfo(tokens.IDToken)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -74,25 +74,12 @@ func (h *APIHandler) InitUser(c *gin.Context) {
 }
 
 func (h *APIHandler) GetUser(c *gin.Context) {
-	tokenHash, err := c.Cookie("th")
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
-
-	dbUser, err := h.db.GetUserByTokenHash(c.Request.Context(), sql.NullString{
-		String: tokenHash,
-		Valid:  true,
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	dbUser := c.MustGet("user").(sqlc.User)
 
 	// Get tokens using authorization code
 	tokens, err := service.GetTokens(h.cfg, dbUser.Token.String)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
