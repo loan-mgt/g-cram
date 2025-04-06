@@ -93,7 +93,13 @@ async function getCurrentUser() {
       "Content-Type": "application/json",
     },
   })
-    .then((response) => response.json())
+    .then((response) => {
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new Error("Error initializing user");
+      }
+    })
     .then((data) => {
       storeUserData(data);
       logedIn();
@@ -130,6 +136,7 @@ function oauthSignIn() {
     redirect_uri: "http://localhost:8080/",
     response_type: "code",
     access_type: "offline",
+    prompt: "consent", // remove long term
     scope:
       "https://www.googleapis.com/auth/photoslibrary https://www.googleapis.com/auth/photospicker.mediaitems.readonly",
     include_granted_scopes: "true",

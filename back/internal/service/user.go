@@ -8,9 +8,9 @@ import (
 	"loan-mgt/g-cram/internal/db/sqlc"
 )
 
-func UpdateOrCreateUser(ctx context.Context, db *db.Store, sub, refreshToken, sha string) error {
-	fmt.Println("Updating or creating user... token hash: ", sha)
-	_, err := db.GetUser(ctx, sub)
+func UpdateOrCreateUser(ctx context.Context, db *db.Store, id, refreshToken, sha string) error {
+	fmt.Println("Updating or creating user... token hash: ", sha, " id: ", id, " token: ", refreshToken)
+	_, err := db.GetUser(ctx, id)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			return fmt.Errorf("error getting user: %w", err)
@@ -18,13 +18,14 @@ func UpdateOrCreateUser(ctx context.Context, db *db.Store, sub, refreshToken, sh
 
 		// Create new user
 		arg := sqlc.CreateUserParams{
-			ID:    sub,
+			ID:    id,
 			Token: sql.NullString{String: refreshToken, Valid: true},
 			TokenHash: sql.NullString{
 				String: sha,
 				Valid:  true,
 			},
 		}
+		fmt.Println("create", arg)
 		if err = db.CreateUser(ctx, arg); err != nil {
 			return fmt.Errorf("error creating user: %w", err)
 		}
@@ -33,7 +34,7 @@ func UpdateOrCreateUser(ctx context.Context, db *db.Store, sub, refreshToken, sh
 
 	// Update existing user
 	arg := sqlc.UpdateUserTokenParams{
-		ID:    sub,
+		ID:    id,
 		Token: sql.NullString{String: refreshToken, Valid: true},
 		TokenHash: sql.NullString{
 			String: sha,
