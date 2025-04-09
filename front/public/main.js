@@ -221,7 +221,7 @@ function fetchMediaItems(id, token, size = 25) {
     .then((responseData) => {
       console.log("responseData", responseData);
       mediaItems = responseData.mediaItems;
-      readerMedia(
+      handleMedia(
         responseData.mediaItems.filter(
           (mediaItem) => mediaItem.type === "VIDEO",
         ),
@@ -229,7 +229,47 @@ function fetchMediaItems(id, token, size = 25) {
     });
 }
 
-function readerMedia(mediaItems) {
+function handleMedia(mediaItems) {
+  /**
+   * {
+  "mediaItems": [
+    {
+      "id": "ADXtojL1Mhq8Sx4I1cvUsujuF-FQePTbjfBnsfzQbGqfbpTZTKi4-BRvnwUbaY5qOAEYXo5hBgGYzAVLg9WCjNWAe-IvVBrfLQ",
+      "createTime": "2025-02-28T00:48:10Z",
+      "type": "VIDEO",
+      "mediaFile": {
+        "baseUrl": "https://lh3.googleusercontent.com/ppa/AGmLvJh1Z5RYm8t0E5pVbAaWjvtdbr_6CuMrVHb2dOsaldyCgsWC3UES0VfI8fFTC8tzLed939fRQQ",
+        "mimeType": "video/mp4",
+        "mediaFileMetadata": {
+          "width": 1080,
+          "height": 1920,
+          "cameraMake": "Google",
+          "cameraModel": "Pixel 4a (5G)",
+          "videoMetadata": {
+            "fps": 59.96273728302323,
+            "processingStatus": "READY"
+          }
+        },
+        "filename": "PXL_20250228_004752831.mp4"
+      }
+    }
+  ]
+}
+
+   */
+
+  fetch(`${api}/v1/media`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ mediaItems }),
+  })
+    .then((response) => response.json())
+    .then((responseData) => {
+      console.log("responseData", responseData);
+    });
+
   mediaItems.forEach((mediaItem) => {
     mediaHolder.appendChild(imageFactory(mediaItem));
   });
