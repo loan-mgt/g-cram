@@ -20,18 +20,19 @@ func (q *Queries) ClearUserTmpMedia(ctx context.Context, userID string) error {
 }
 
 const createMedia = `-- name: CreateMedia :exec
-INSERT INTO media (user_id, timestamp, media_id, creation_date, filename, old_size, new_size, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO media (user_id, timestamp, media_id, creation_date, filename, base_url, old_size, new_size, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateMediaParams struct {
-	UserID       string         `json:"user_id"`
-	Timestamp    sql.NullInt64  `json:"timestamp"`
-	MediaID      string         `json:"media_id"`
-	CreationDate sql.NullInt64  `json:"creation_date"`
-	Filename     sql.NullString `json:"filename"`
-	OldSize      sql.NullInt64  `json:"old_size"`
-	NewSize      sql.NullInt64  `json:"new_size"`
-	Done         sql.NullInt64  `json:"done"`
+	UserID       string        `json:"user_id"`
+	Timestamp    int64         `json:"timestamp"`
+	MediaID      string        `json:"media_id"`
+	CreationDate int64         `json:"creation_date"`
+	Filename     string        `json:"filename"`
+	BaseUrl      string        `json:"base_url"`
+	OldSize      sql.NullInt64 `json:"old_size"`
+	NewSize      sql.NullInt64 `json:"new_size"`
+	Done         int64         `json:"done"`
 }
 
 func (q *Queries) CreateMedia(ctx context.Context, arg CreateMediaParams) error {
@@ -41,6 +42,7 @@ func (q *Queries) CreateMedia(ctx context.Context, arg CreateMediaParams) error 
 		arg.MediaID,
 		arg.CreationDate,
 		arg.Filename,
+		arg.BaseUrl,
 		arg.OldSize,
 		arg.NewSize,
 		arg.Done,
@@ -49,12 +51,12 @@ func (q *Queries) CreateMedia(ctx context.Context, arg CreateMediaParams) error 
 }
 
 const getMedias = `-- name: GetMedias :many
-SELECT user_id, timestamp, media_id, creation_date, filename, old_size, new_size, done FROM media WHERE user_id = ? and timestamp = ?
+SELECT user_id, timestamp, media_id, creation_date, filename, base_url, old_size, new_size, done FROM media WHERE user_id = ? and timestamp = ?
 `
 
 type GetMediasParams struct {
-	UserID    string        `json:"user_id"`
-	Timestamp sql.NullInt64 `json:"timestamp"`
+	UserID    string `json:"user_id"`
+	Timestamp int64  `json:"timestamp"`
 }
 
 func (q *Queries) GetMedias(ctx context.Context, arg GetMediasParams) ([]Medium, error) {
@@ -72,6 +74,7 @@ func (q *Queries) GetMedias(ctx context.Context, arg GetMediasParams) ([]Medium,
 			&i.MediaID,
 			&i.CreationDate,
 			&i.Filename,
+			&i.BaseUrl,
 			&i.OldSize,
 			&i.NewSize,
 			&i.Done,
@@ -103,7 +106,7 @@ UPDATE media SET done = ?, new_size = ? WHERE media_id = ?
 `
 
 type SetMediaDoneParams struct {
-	Done    sql.NullInt64 `json:"done"`
+	Done    int64         `json:"done"`
 	NewSize sql.NullInt64 `json:"new_size"`
 	MediaID string        `json:"media_id"`
 }
@@ -118,9 +121,9 @@ UPDATE media SET timestamp = ? WHERE media_id = ? and user_id = ?
 `
 
 type SetMediaTimestampParams struct {
-	Timestamp sql.NullInt64 `json:"timestamp"`
-	MediaID   string        `json:"media_id"`
-	UserID    string        `json:"user_id"`
+	Timestamp int64  `json:"timestamp"`
+	MediaID   string `json:"media_id"`
+	UserID    string `json:"user_id"`
 }
 
 func (q *Queries) SetMediaTimestamp(ctx context.Context, arg SetMediaTimestampParams) error {

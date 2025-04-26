@@ -19,13 +19,14 @@ CREATE INDEX idx_jobs_user_id_timestamp ON jobs(user_id, timestamp);
 
 CREATE TABLE media (
     user_id TEXT NOT NULL,
-    timestamp INTEGER,
+    timestamp INTEGER NOT NULL,
     media_id TEXT NOT NULL,
-    creation_date INTEGER,
-    filename TEXT,
+    creation_date INTEGER NOT NULL,
+    filename TEXT NOT NULL,
+    base_url TEXT NOT NULL,
     old_size INTEGER,
     new_size INTEGER,
-    done INTEGER,
+    done INTEGER NOT NULL,
     PRIMARY KEY (user_id, timestamp, media_id),
     FOREIGN KEY (user_id, timestamp) REFERENCES jobs(user_id, timestamp)
 );

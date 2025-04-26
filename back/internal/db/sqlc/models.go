@@ -14,14 +14,15 @@ type Job struct {
 }
 
 type Medium struct {
-	UserID       string         `json:"user_id"`
-	Timestamp    sql.NullInt64  `json:"timestamp"`
-	MediaID      string         `json:"media_id"`
-	CreationDate sql.NullInt64  `json:"creation_date"`
-	Filename     sql.NullString `json:"filename"`
-	OldSize      sql.NullInt64  `json:"old_size"`
-	NewSize      sql.NullInt64  `json:"new_size"`
-	Done         sql.NullInt64  `json:"done"`
+	UserID       string        `json:"user_id"`
+	Timestamp    int64         `json:"timestamp"`
+	MediaID      string        `json:"media_id"`
+	CreationDate int64         `json:"creation_date"`
+	Filename     string        `json:"filename"`
+	BaseUrl      string        `json:"base_url"`
+	OldSize      sql.NullInt64 `json:"old_size"`
+	NewSize      sql.NullInt64 `json:"new_size"`
+	Done         int64         `json:"done"`
 }
 
 type User struct {

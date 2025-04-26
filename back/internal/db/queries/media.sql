@@ -1,5 +1,5 @@
 -- name: CreateMedia :exec
-INSERT INTO media (user_id, timestamp, media_id, creation_date, filename, old_size, new_size, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO media (user_id, timestamp, media_id, creation_date, filename, base_url, old_size, new_size, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: SetMediaDone :exec
 UPDATE media SET done = ?, new_size = ? WHERE media_id = ?;
