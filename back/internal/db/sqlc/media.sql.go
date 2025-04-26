@@ -19,6 +19,17 @@ func (q *Queries) ClearUserTmpMedia(ctx context.Context, userID string) error {
 	return err
 }
 
+const countUserMedia = `-- name: CountUserMedia :one
+SELECT COUNT(*) FROM media WHERE user_id = ? and done = 0
+`
+
+func (q *Queries) CountUserMedia(ctx context.Context, userID string) (int64, error) {
+	row := q.queryRow(ctx, q.countUserMediaStmt, countUserMedia, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createMedia = `-- name: CreateMedia :exec
 INSERT INTO media (user_id, timestamp, media_id, creation_date, filename, base_url, old_size, new_size, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 `

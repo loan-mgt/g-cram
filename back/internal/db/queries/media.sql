@@ -15,3 +15,6 @@ SELECT * FROM media WHERE user_id = ? and timestamp = ?;
 
 -- name: SetMediaTimestamp :exec
 UPDATE media SET timestamp = ? WHERE media_id = ? and user_id = ?;
+
+-- name: CountUserMedia :one
+SELECT COUNT(*) FROM media WHERE user_id = ? and done = 0;

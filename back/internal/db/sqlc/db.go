@@ -27,6 +27,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.clearUserTmpMediaStmt, err = db.PrepareContext(ctx, clearUserTmpMedia); err != nil {
 		return nil, fmt.Errorf("error preparing query ClearUserTmpMedia: %w", err)
 	}
+	if q.countUserMediaStmt, err = db.PrepareContext(ctx, countUserMedia); err != nil {
+		return nil, fmt.Errorf("error preparing query CountUserMedia: %w", err)
+	}
 	if q.createJobStmt, err = db.PrepareContext(ctx, createJob); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateJob: %w", err)
 	}
@@ -71,6 +74,11 @@ func (q *Queries) Close() error {
 	if q.clearUserTmpMediaStmt != nil {
 		if cerr := q.clearUserTmpMediaStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing clearUserTmpMediaStmt: %w", cerr)
+		}
+	}
+	if q.countUserMediaStmt != nil {
+		if cerr := q.countUserMediaStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countUserMediaStmt: %w", cerr)
 		}
 	}
 	if q.createJobStmt != nil {
@@ -173,6 +181,7 @@ type Queries struct {
 	db                         DBTX
 	tx                         *sql.Tx
 	clearUserTmpMediaStmt      *sql.Stmt
+	countUserMediaStmt         *sql.Stmt
 	createJobStmt              *sql.Stmt
 	createMediaStmt            *sql.Stmt
 	createUserStmt             *sql.Stmt
@@ -192,6 +201,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		db:                         tx,
 		tx:                         tx,
 		clearUserTmpMediaStmt:      q.clearUserTmpMediaStmt,
+		countUserMediaStmt:         q.countUserMediaStmt,
 		createJobStmt:              q.createJobStmt,
 		createMediaStmt:            q.createMediaStmt,
 		createUserStmt:             q.createUserStmt,

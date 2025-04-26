@@ -49,5 +49,12 @@ func (h *APIHandler) SetUserMedia(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "success"})
+	// get nb of media for user
+	nbMedia, err := h.db.CountUserMedia(c.Request.Context(), user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "nb_media": nbMedia})
 }

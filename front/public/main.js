@@ -248,6 +248,10 @@ function handleMedia(mediaItems) {
     .then((response) => response.json())
     .then((responseData) => {
       console.log("responseData", responseData);
+      const nbMedia = responseData.nb_media;
+      const mediaCountElement = document.createElement("p");
+      mediaCountElement.textContent = `Number of selected items: ${nbMedia}`;
+      document.body.appendChild(mediaCountElement);
     });
 
   mediaItems.forEach((mediaItem) => {

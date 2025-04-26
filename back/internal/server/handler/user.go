@@ -45,7 +45,7 @@ func (h *APIHandler) InitUser(c *gin.Context) {
 	}
 
 	// Get tokens using authorization code
-	tokens, err := service.GetTokens(h.cfg, payload.Code)
+	tokens, err := service.GetRefreshToken(h.cfg, payload.Code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -77,7 +77,7 @@ func (h *APIHandler) GetUser(c *gin.Context) {
 	dbUser := c.MustGet("user").(sqlc.User)
 
 	// Get tokens using authorization code
-	tokens, err := service.GetTokens(h.cfg, dbUser.Token.String)
+	tokens, err := service.GetAccessToken(context.Background(), h.cfg, h.db, dbUser.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
