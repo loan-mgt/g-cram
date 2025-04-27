@@ -9,11 +9,10 @@ import (
 func HandleCompression(body []byte, amqpConn *service.AMQPConnection) {
 
 	var msg struct {
-		Token        string `json:"token"`
-		Id           string `json:"id"`
-		CreationDate string `json:"creationDate"`
-		Name         string `json:"name"`
+		MediaId      string `json:"mediaId"`
 		UserId       string `json:"userId"`
+		Timestamp    int64  `json:"timestamp"`
+		CreationDate string `json:"creationDate"`
 	}
 
 	err := json.Unmarshal(body, &msg)
@@ -22,7 +21,9 @@ func HandleCompression(body []byte, amqpConn *service.AMQPConnection) {
 		return
 	}
 
-	err = service.CreateVideoWithMetadata(msg.Id, msg.CreationDate)
+	path := fmt.Sprintf("%s_%d/%s", msg.UserId, msg.Timestamp, msg.MediaId)
+
+	outputSize, err := service.CreateVideoWithMetadata(path, msg.CreationDate)
 	if err != nil {
 		fmt.Printf("Error creating video with metadata: %s\n", err)
 		return
@@ -30,7 +31,7 @@ func HandleCompression(body []byte, amqpConn *service.AMQPConnection) {
 
 	fmt.Println("Compressed video created successfully")
 
-	err = amqpConn.SendRequest(msg.Token, msg.Name, fmt.Sprintf("/tmp/out/%s.mp4", msg.Id), msg.UserId)
+	err = amqpConn.SendRequest(msg.MediaId, msg.UserId, msg.Timestamp, outputSize)
 	if err != nil {
 		fmt.Printf("Error uploading video: %s\n", err)
 		return

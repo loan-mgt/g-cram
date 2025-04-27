@@ -9,10 +9,17 @@ import (
 )
 
 type AMQPConnection struct {
-	Conn        *amqp.Connection
-	Channel     *amqp.Channel
-	Queue       amqp.Queue
-	CramerQueue amqp.Queue
+	Conn      *amqp.Connection
+	Channel   *amqp.Channel
+	DoneQueue amqp.Queue
+	Queue     amqp.Queue
+}
+
+type DoneMsg struct {
+	MediaId   string `json:"mediaId"`
+	UserId    string `json:"userId"`
+	Timestamp int64  `json:"timestamp"`
+	FileSize  int64  `json:"fileSize"`
 }
 
 func NewAMQPConnection(cfg *config.Config) (*AMQPConnection, error) {
@@ -28,12 +35,12 @@ func NewAMQPConnection(cfg *config.Config) (*AMQPConnection, error) {
 	}
 
 	q, err := ch.QueueDeclare(
-		"uploader", // name
-		true,       // durable
-		false,      // delete when unused
-		false,      // exclusive
-		false,      // no-wait
-		nil,        // arguments
+		"cramer_done", // name
+		true,          // durable
+		false,         // delete when unused
+		false,         // exclusive
+		false,         // no-wait
+		nil,           // arguments
 	)
 	if err != nil {
 		return nil, err
@@ -52,19 +59,19 @@ func NewAMQPConnection(cfg *config.Config) (*AMQPConnection, error) {
 	}
 
 	return &AMQPConnection{
-		Conn:        conn,
-		Channel:     ch,
-		Queue:       q,
-		CramerQueue: cramerQueue,
+		Conn:      conn,
+		Channel:   ch,
+		DoneQueue: q,
+		Queue:     cramerQueue,
 	}, nil
 }
 
-func (a *AMQPConnection) SendRequest(token, filename, videoPath, userId string) error {
-	data := map[string]string{
-		"token":     token,
-		"filename":  filename,
-		"videoPath": videoPath,
-		"userId":    userId,
+func (a *AMQPConnection) SendRequest(mediaId, userId string, timestamp, fileSize int64) error {
+	data := DoneMsg{
+		MediaId:   mediaId,
+		UserId:    userId,
+		Timestamp: timestamp,
+		FileSize:  fileSize,
 	}
 
 	jsonData, err := json.Marshal(data)
@@ -73,10 +80,10 @@ func (a *AMQPConnection) SendRequest(token, filename, videoPath, userId string) 
 	}
 
 	return a.Channel.Publish(
-		"",           // exchange
-		a.Queue.Name, // routing key
-		false,        // mandatory
-		false,        // immediate
+		"",               // exchange
+		a.DoneQueue.Name, // routing key
+		false,            // mandatory
+		false,            // immediate
 		amqp.Publishing{
 			ContentType: "application/json",
 			Body:        jsonData,
@@ -86,12 +93,12 @@ func (a *AMQPConnection) SendRequest(token, filename, videoPath, userId string) 
 
 func (a *AMQPConnection) ConsumeCramerQueue() (<-chan amqp.Delivery, error) {
 	return a.Channel.Consume(
-		a.CramerQueue.Name, // queue
-		"",                 // consumer
-		true,               // auto-ack
-		false,              // exclusive
-		false,              // no-local
-		false,              // no-wait
-		nil,                // args
+		a.Queue.Name, // queue
+		"",           // consumer
+		true,         // auto-ack
+		false,        // exclusive
+		false,        // no-local
+		false,        // no-wait
+		nil,          // args
 	)
 }
