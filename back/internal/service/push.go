@@ -92,11 +92,13 @@ func PushNotification(db *db.Store, cfg *config.Config, id, body, tag string) er
 		return fmt.Errorf("error unmarshaling subscription: %w", err)
 	}
 
+	fmt.Println("Pushing notification", body)
+
 	// Prepare notification payload
 	payload := Notification{
 		Title: "G-cram",
 		Body:  body,
-		Icon:  "https://ringwatchers.com/images/Main_Blank.png",
+		Icon:  "/favicon.svg",
 		Tag:   tag,
 	}
 

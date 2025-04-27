@@ -367,11 +367,6 @@ function requestNotification() {
   } else {
     Notification.requestPermission().then((permission) => {
       console.log("Notification", permission);
-      if (permission === "granted") {
-        new Notification("G-CRAM", {
-          body: "Starting Compression",
-        });
-      }
     });
   }
 }

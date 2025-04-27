@@ -35,8 +35,10 @@ func UploadVideo(token string, videoPath string, fileName string) error {
 	if err != nil {
 		return err
 	}
+	token = fmt.Sprintf("Bearer %s", token)
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	fmt.Println("token: ", token)
+	req.Header.Set("Authorization", token)
 	req.Header.Set("Content-type", "application/octet-stream")
 	req.Header.Set("X-Goog-Upload-Content-Type", "video/mp4")
 	req.Header.Set("X-Goog-Upload-Protocol", "raw")

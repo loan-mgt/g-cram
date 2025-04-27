@@ -28,9 +28,9 @@ func StartUploadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *config.
 
 	for d := range msgs {
 		var payload struct {
-			MediaId   string `json:"token"`
-			UserId    string `json:"filename"`
-			Timestamp int64  `json:"userId"`
+			MediaId   string `json:"mediaId"`
+			UserId    string `json:"userId"`
+			Timestamp int64  `json:"timestamp"`
 		}
 
 		if err := json.Unmarshal(d.Body, &payload); err != nil {
@@ -77,7 +77,7 @@ func StartUploadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *config.
 			fmt.Println("Error sending message to WebSocket:", err)
 		}
 
-		err = PushNotification(db, cfg, payload.UserId, fmt.Sprintf("Notification: %s", media.Filename), "job-done:"+media.Filename)
+		err = PushNotification(db, cfg, payload.UserId, fmt.Sprintf("Upload done: %s", media.Filename), media.Filename)
 		if err != nil {
 			fmt.Println("Error sending push notification:", err)
 		}

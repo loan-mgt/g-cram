@@ -15,7 +15,8 @@ self.addEventListener("push", (event) => {
     const options = {
         body: data.body,
         icon: data.icon,
-        tag: data.tag
+        tag: data.tag,
+        silent: data.silent ?? true
     }
     event.waitUntil(
         self.registration.showNotification(data.title, options)
