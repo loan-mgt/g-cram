@@ -61,8 +61,8 @@ func NewRouter(store *db.Store, amqpConn *service.AMQPConnection, ws *ws.WebSock
 		v1.GET("/user", mc.AuthMiddleware(), apiHandler.GetUser)
 		v1.POST("/user", apiHandler.InitUser)
 		v1.PATCH(("/media"), mc.AuthMiddleware(), apiHandler.SetUserMedia)
-		v1.POST("/user/:userId/subscription", apiHandler.AddSubscriptionToUser)
-		v1.DELETE("/user/:userId/subscription", apiHandler.RemoveSubscriptionFromUser)
+		v1.POST("/user/subscription", mc.AuthMiddleware(), apiHandler.AddSubscriptionToUser)
+		v1.DELETE("/user/subscription", mc.AuthMiddleware(), apiHandler.RemoveSubscriptionFromUser)
 
 		v1.GET("/ws", apiHandler.WebSocket)
 	}

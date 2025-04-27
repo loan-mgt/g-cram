@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"loan-mgt/cramer/internal/service"
+	"os"
 )
 
 func HandleCompression(body []byte, amqpConn *service.AMQPConnection) {
@@ -22,6 +23,12 @@ func HandleCompression(body []byte, amqpConn *service.AMQPConnection) {
 	}
 
 	path := fmt.Sprintf("%s_%d/%s", msg.UserId, msg.Timestamp, msg.MediaId)
+
+	err = os.MkdirAll(fmt.Sprintf("/tmp/out/%s_%d", msg.UserId, msg.Timestamp), 0755)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	outputSize, err := service.CreateVideoWithMetadata(path, msg.CreationDate)
 	if err != nil {

@@ -153,17 +153,23 @@ func (q *Queries) RemoveMedia(ctx context.Context, mediaID string) error {
 }
 
 const setMediaDone = `-- name: SetMediaDone :exec
-UPDATE media SET done = ?, new_size = ? WHERE media_id = ?
+UPDATE media SET done = ? WHERE media_id = ? and user_id = ? and timestamp = ?
 `
 
 type SetMediaDoneParams struct {
-	Done    int64         `json:"done"`
-	NewSize sql.NullInt64 `json:"new_size"`
-	MediaID string        `json:"media_id"`
+	Done      int64  `json:"done"`
+	MediaID   string `json:"media_id"`
+	UserID    string `json:"user_id"`
+	Timestamp int64  `json:"timestamp"`
 }
 
 func (q *Queries) SetMediaDone(ctx context.Context, arg SetMediaDoneParams) error {
-	_, err := q.exec(ctx, q.setMediaDoneStmt, setMediaDone, arg.Done, arg.NewSize, arg.MediaID)
+	_, err := q.exec(ctx, q.setMediaDoneStmt, setMediaDone,
+		arg.Done,
+		arg.MediaID,
+		arg.UserID,
+		arg.Timestamp,
+	)
 	return err
 }
 

@@ -9,10 +9,16 @@ import (
 )
 
 type AMQPConnection struct {
-	Conn       *amqp.Connection
-	Channel    *amqp.Channel
-	Queue      amqp.Queue
-	NotifQueue amqp.Queue
+	Conn      *amqp.Connection
+	Channel   *amqp.Channel
+	Queue     amqp.Queue
+	DoneQueue amqp.Queue
+}
+
+type DoneMsg struct {
+	MediaId   string `json:"mediaId"`
+	UserId    string `json:"userId"`
+	Timestamp int64  `json:"timestamp"`
 }
 
 func NewAMQPConnection(cfg *config.Config) (*AMQPConnection, error) {
@@ -40,22 +46,22 @@ func NewAMQPConnection(cfg *config.Config) (*AMQPConnection, error) {
 	}
 
 	qNotif, err := ch.QueueDeclare(
-		"notification", // name
-		true,           // durable
-		false,          // delete when unused
-		false,          // exclusive
-		false,          // no-wait
-		nil,            // arguments
+		"uploader_done", // name
+		true,            // durable
+		false,           // delete when unused
+		false,           // exclusive
+		false,           // no-wait
+		nil,             // arguments
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &AMQPConnection{
-		Conn:       conn,
-		Channel:    ch,
-		Queue:      q,
-		NotifQueue: qNotif,
+		Conn:      conn,
+		Channel:   ch,
+		Queue:     q,
+		DoneQueue: qNotif,
 	}, nil
 }
 
@@ -85,19 +91,18 @@ func (a *AMQPConnection) SendRequest(channelName string, jsonData []byte) error 
 	)
 }
 
-func (a *AMQPConnection) SendNotificationRequest(token, filename, userId string) error {
+func (a *AMQPConnection) SendNotificationRequest(mediaId, userId string, timestamp int64) error {
 
-	data := map[string]string{
-		"token":    token,
-		"filename": filename,
-		"userId":   userId,
+	data := DoneMsg{
+		MediaId:   mediaId,
+		UserId:    userId,
+		Timestamp: timestamp,
 	}
-
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 
-	return a.SendRequest(a.NotifQueue.Name, jsonData)
+	return a.SendRequest(a.DoneQueue.Name, jsonData)
 
 }

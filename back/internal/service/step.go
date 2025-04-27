@@ -196,11 +196,13 @@ func StartCramerDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *config.
 			UserID    string `json:"userId"`
 			Timestamp int64  `json:"timestamp"`
 			Token     string `json:"token"`
+			FileName  string `json:"fileName"`
 		}{
 			MediaID:   payload.MediaId,
 			UserID:    payload.UserId,
 			Timestamp: payload.Timestamp,
 			Token:     accessToken,
+			FileName:  media.Filename,
 		}
 
 		jsonData, err := json.Marshal(nextPayload)

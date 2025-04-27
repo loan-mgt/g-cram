@@ -2,6 +2,7 @@ package handler
 
 import (
 	"io"
+	"loan-mgt/g-cram/internal/db/sqlc"
 	"loan-mgt/g-cram/internal/service"
 	"net/http"
 
@@ -9,10 +10,7 @@ import (
 )
 
 func (h *APIHandler) AddSubscriptionToUser(c *gin.Context) {
-	userId := c.Param("userId")
-	if userId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
-	}
+	user := c.MustGet("user").(sqlc.User)
 
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
@@ -20,7 +18,7 @@ func (h *APIHandler) AddSubscriptionToUser(c *gin.Context) {
 		return
 	}
 
-	if err := service.AddSubscriptionToUser(c.Request.Context(), h.db, userId, string(body)); err != nil {
+	if err := service.AddSubscriptionToUser(c.Request.Context(), h.db, user.ID, string(body)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
@@ -28,12 +26,9 @@ func (h *APIHandler) AddSubscriptionToUser(c *gin.Context) {
 }
 
 func (h *APIHandler) RemoveSubscriptionFromUser(c *gin.Context) {
-	userId := c.Param("userId")
-	if userId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
-	}
+	user := c.MustGet("user").(sqlc.User)
 
-	if err := service.RemoveSubscriptionFromUser(c.Request.Context(), h.db, userId); err != nil {
+	if err := service.RemoveSubscriptionFromUser(c.Request.Context(), h.db, user.ID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 

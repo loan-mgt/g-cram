@@ -36,7 +36,7 @@ func UploadVideo(token string, videoPath string, fileName string) error {
 		return err
 	}
 
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	req.Header.Set("Content-type", "application/octet-stream")
 	req.Header.Set("X-Goog-Upload-Content-Type", "video/mp4")
 	req.Header.Set("X-Goog-Upload-Protocol", "raw")
@@ -94,12 +94,7 @@ func UploadVideo(token string, videoPath string, fileName string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Errorf("status code: %d", resp.StatusCode)
-			return err
-		}
-		return fmt.Errorf("status code: %d, response: %s", resp.StatusCode, string(body))
+		return fmt.Errorf("status code: %d, response: %s", resp.StatusCode, resp.Status)
 	}
 
 	return nil

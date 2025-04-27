@@ -2,7 +2,7 @@
 INSERT INTO media (user_id, timestamp, media_id, creation_date, filename, base_url, old_size, new_size, step, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?);
 
 -- name: SetMediaDone :exec
-UPDATE media SET done = ?, new_size = ? WHERE media_id = ?;
+UPDATE media SET done = ? WHERE media_id = ? and user_id = ? and timestamp = ?;
 
 -- name: RemoveMedia :exec
 DELETE FROM media WHERE media_id = ?;

@@ -405,24 +405,18 @@ async function registerServiceWorker() {
 
     // Check if already subscribed
     const subscribed = await registration.pushManager.getSubscription();
-    if (subscribed) {
-      console.info("User is already subscribed.");
-      registration.update();
-      return;
-    }
-
-    // Subscribe the user
-    const subscription = await registration.pushManager.subscribe({
+    const subscription = subscribed || (await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: VAPID_PUBLIC_KEY,
-    });
+    }));
 
     // Send the subscription to the server
-    await fetch(`${api}/user/${localStorage.getItem("user_id")}/subscription`, {
+    await fetch(`${api}/user/subscription`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify(subscription),
     });
 

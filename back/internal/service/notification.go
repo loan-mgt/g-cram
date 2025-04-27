@@ -1,16 +1,18 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"loan-mgt/g-cram/internal/config"
 	"loan-mgt/g-cram/internal/db"
+	"loan-mgt/g-cram/internal/db/sqlc"
 	"loan-mgt/g-cram/internal/server/ws"
 )
 
 func StartUploadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *config.Config) {
 
-	notification, err := NewAMQPConnection(config.New(), "notification")
+	notification, err := NewAMQPConnection(config.New(), "uploader_done")
 	if err != nil {
 		panic(err)
 	}
@@ -26,20 +28,56 @@ func StartUploadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *config.
 
 	for d := range msgs {
 		var payload struct {
-			Token    string `json:"token"`
-			Filename string `json:"filename"`
-			UserId   string `json:"userId"`
+			MediaId   string `json:"token"`
+			UserId    string `json:"filename"`
+			Timestamp int64  `json:"userId"`
 		}
 
 		if err := json.Unmarshal(d.Body, &payload); err != nil {
 			fmt.Println("Error unmarshal ling message:", err)
 			continue
 		}
+
+		param := sqlc.GetMediaParams{
+			MediaID:   payload.MediaId,
+			UserID:    payload.UserId,
+			Timestamp: payload.Timestamp,
+		}
+
+		media, err := db.GetMedia(context.Background(), param)
+		if err != nil {
+			fmt.Println("Error getting media:", err)
+			continue
+		}
+
+		// update step +1 and set done
+		err = db.SetMediaStep(context.Background(), sqlc.SetMediaStepParams{
+			MediaID:   media.MediaID,
+			UserID:    media.UserID,
+			Timestamp: media.Timestamp,
+			Step:      media.Step + 1,
+		})
+		if err != nil {
+			fmt.Println("Error updating media step:", err)
+			continue
+		}
+
+		err = db.SetMediaDone(context.Background(), sqlc.SetMediaDoneParams{
+			MediaID:   media.MediaID,
+			UserID:    media.UserID,
+			Timestamp: media.Timestamp,
+			Done:      1,
+		})
+		if err != nil {
+			fmt.Println("Error updating media done:", err)
+			continue
+		}
+
 		if err := ws.SendMessageToClient(payload.UserId, "Success"); err != nil {
 			fmt.Println("Error sending message to WebSocket:", err)
 		}
 
-		err = PushNotification(db, cfg, payload.UserId, fmt.Sprintf("Notification: %s", payload.Filename), "job-done:"+payload.Filename)
+		err = PushNotification(db, cfg, payload.UserId, fmt.Sprintf("Notification: %s", media.Filename), "job-done:"+media.Filename)
 		if err != nil {
 			fmt.Println("Error sending push notification:", err)
 		}
