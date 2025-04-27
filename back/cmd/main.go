@@ -15,36 +15,41 @@ import (
 	"loan-mgt/g-cram/internal/server"
 	"loan-mgt/g-cram/internal/server/ws"
 	"loan-mgt/g-cram/internal/service"
+
+	"github.com/gin-gonic/gin"
 )
 
-func main() {
-	// Load configuration
-	cfg := config.New()
+func loadConfig() *config.Config {
+	return config.New()
+}
 
+func newDB(cfg *config.Config) *db.Store {
 	store := db.NewStore(cfg)
-	defer store.Close()
+	return store
+}
 
-	amqpConn, err := service.NewAMQPConnection(config.New(), "cramer")
-	if err != nil {
-		panic(err)
-	}
-	defer amqpConn.Conn.Close()
+func newAMQPConnection(cfg *config.Config) (*service.AMQPConnection, error) {
+	return service.NewAMQPConnection(cfg, "downloader")
+}
 
-	ws := ws.NewWebSocketManager()
-	defer ws.Close()
+func newWebSocketManager() *ws.WebSocketManager {
+	return ws.NewWebSocketManager()
+}
 
-	go service.StartListener(ws, store, cfg)
+func startListener(ws *ws.WebSocketManager, store *db.Store, cfg *config.Config) {
+	go service.StartUploadDoneListener(ws, store, cfg)
+}
 
-	// Set up router
-	router := server.NewRouter(store, amqpConn, ws, cfg)
+func newRouter(store *db.Store, amqpConn *service.AMQPConnection, ws *ws.WebSocketManager, cfg *config.Config) *gin.Engine {
+	return server.NewRouter(store, amqpConn, ws, cfg)
+}
 
-	// Configure HTTP server
+func startServer(cfg *config.Config, router *gin.Engine) {
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.ServerPort),
 		Handler: router,
 	}
 
-	// Start server in a goroutine
 	go func() {
 		log.Printf("Starting server on port %d", cfg.ServerPort)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -69,4 +74,18 @@ func main() {
 	}
 
 	log.Println("Server exited gracefully")
+}
+
+func main() {
+	cfg := loadConfig()
+	store := newDB(cfg)
+	amqpConn, err := newAMQPConnection(cfg)
+	if err != nil {
+		panic(err)
+	}
+	ws := newWebSocketManager()
+	startListener(ws, store, cfg)
+
+	router := newRouter(store, amqpConn, ws, cfg)
+	startServer(cfg, router)
 }

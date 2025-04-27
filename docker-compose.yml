@@ -78,6 +78,27 @@ services:
       default:
         aliases:
           - uploader
+  downloader:
+    build:
+      context: .
+      dockerfile: downloader/Dockerfile
+    container_name: downloader-g-cram
+    environment:
+      - LOG_LEVEL=info
+      - RABBITMQ_HOST=rabbit
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_PASS=${RABBITMQ_DEFAULT_PASS}
+    restart: unless-stopped
+    volumes:
+      - ./media/in:/tmp/in:wo
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      default:
+        aliases:
+          - downloader
   rabbitmq:
     image: rabbitmq:4.0.7-management
     container_name: rabbitmq-g-cram

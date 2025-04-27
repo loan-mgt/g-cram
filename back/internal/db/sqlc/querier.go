@@ -15,12 +15,17 @@ type Querier interface {
 	CreateJob(ctx context.Context, userID string) error
 	CreateMedia(ctx context.Context, arg CreateMediaParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
-	GetMedias(ctx context.Context, arg GetMediasParams) ([]Medium, error)
+	GetMedia(ctx context.Context, arg GetMediaParams) (Medium, error)
+	GetMediaCurrentStep(ctx context.Context, arg GetMediaCurrentStepParams) (int64, error)
+	GetMedias(ctx context.Context, userID string) ([]Medium, error)
 	GetUser(ctx context.Context, id string) (User, error)
 	GetUserByTokenHash(ctx context.Context, tokenHash sql.NullString) (User, error)
 	GetUserJobDetails(ctx context.Context, userID string) ([]GetUserJobDetailsRow, error)
 	RemoveMedia(ctx context.Context, mediaID string) error
 	SetMediaDone(ctx context.Context, arg SetMediaDoneParams) error
+	SetMediaNewSize(ctx context.Context, arg SetMediaNewSizeParams) error
+	SetMediaOldSize(ctx context.Context, arg SetMediaOldSizeParams) error
+	SetMediaStep(ctx context.Context, arg SetMediaStepParams) error
 	SetMediaTimestamp(ctx context.Context, arg SetMediaTimestampParams) error
 	UpdateUserSubscription(ctx context.Context, arg UpdateUserSubscriptionParams) error
 	UpdateUserToken(ctx context.Context, arg UpdateUserTokenParams) error

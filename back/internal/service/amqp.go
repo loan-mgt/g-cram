@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"fmt"
 	"loan-mgt/g-cram/internal/config"
 
@@ -45,19 +44,7 @@ func NewAMQPConnection(cfg *config.Config, subject string) (*AMQPConnection, err
 	}, nil
 }
 
-func (a *AMQPConnection) SendRequest(token, id, creationDate, filename, videoPath, userId string) error {
-	data := map[string]string{
-		"token":        token,
-		"id":           id,
-		"creationDate": creationDate,
-		"name":         filename,
-		"userId":       userId,
-	}
-
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
+func (a *AMQPConnection) SendRequest(jsonData []byte) error {
 
 	return a.Channel.Publish(
 		"",           // exchange

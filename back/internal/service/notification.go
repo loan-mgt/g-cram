@@ -8,7 +8,7 @@ import (
 	"loan-mgt/g-cram/internal/server/ws"
 )
 
-func StartListener(ws *ws.WebSocketManager, db *db.Store, cfg *config.Config) {
+func StartUploadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *config.Config) {
 
 	notification, err := NewAMQPConnection(config.New(), "notification")
 	if err != nil {

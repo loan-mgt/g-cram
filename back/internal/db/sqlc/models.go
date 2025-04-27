@@ -22,6 +22,7 @@ type Medium struct {
 	BaseUrl      string        `json:"base_url"`
 	OldSize      sql.NullInt64 `json:"old_size"`
 	NewSize      sql.NullInt64 `json:"new_size"`
+	Step         int64         `json:"step"`
 	Done         int64         `json:"done"`
 }
 

@@ -1,41 +1,57 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
+	"loan-mgt/g-cram/internal/db/sqlc"
+	"loan-mgt/g-cram/internal/service"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-// send request on rabbit mq to comrpess
 func (h *APIHandler) Start(c *gin.Context) {
-	var payload []struct {
-		Id           string `json:"id"`
-		CreationDate string `json:"creationDate"`
-		Name         string `json:"name"`
-	}
+	user := c.MustGet("user").(sqlc.User)
 
-	userId := c.Request.URL.Query().Get("id")
-
-	jsonData, err := c.GetRawData()
+	accessToken, err := service.GetAccessToken(context.Background(), h.cfg, h.db, user.ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := json.Unmarshal(jsonData, &payload); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if accessToken == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	token := c.Request.Header.Get("Authorization")
+	mediaItems, err := h.db.GetMedias(c.Request.Context(), user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-	for _, p := range payload {
-		videoPath := fmt.Sprintf("/tmp/in/%s.mp4", p.Id)
-		fmt.Println(videoPath)
-		err = h.amqpConn.SendRequest(token, p.Id, p.CreationDate, p.Name, videoPath, userId)
+	for _, media := range mediaItems {
+		message := struct {
+			Token     string `json:"token"`
+			MediaId   string `json:"mediaId"`
+			UserId    string `json:"userId"`
+			Timestamp int64  `json:"timestamp"`
+			BaseUrl   string `json:"baseUrl"`
+		}{
+			Token:     accessToken,
+			MediaId:   media.MediaID,
+			UserId:    media.UserID,
+			Timestamp: media.Timestamp,
+			BaseUrl:   media.BaseUrl,
+		}
+
+		messageData, err := json.Marshal(message)
 		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if err := h.amqpConn.SendRequest(messageData); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}

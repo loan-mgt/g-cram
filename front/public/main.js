@@ -316,12 +316,12 @@ const loadVideoIntoVideo = (videoId, baseUrl) => {
 function startCompression() {
   requestNotification();
   registerServiceWorker();
-  fetch(`${api}/start?id=${localStorage.getItem("user_id")}`, {
+  fetch(`${api}/start`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer " + localStorage.getItem("access_token"),
     },
+    credentials: "include",
     body: JSON.stringify(
       mediaItems
         .filter((mediaItem) => mediaItem.type === "VIDEO")

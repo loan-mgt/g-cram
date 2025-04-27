@@ -12,7 +12,7 @@ func (mc *MiddleWareContext) AuthMiddleware() gin.HandlerFunc {
 
 		tokenHash, err := c.Cookie("th")
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			return
 		}
 
@@ -21,7 +21,11 @@ func (mc *MiddleWareContext) AuthMiddleware() gin.HandlerFunc {
 			Valid:  true,
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			if err == sql.ErrNoRows {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			} else {
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			}
 			return
 		}
 

@@ -31,7 +31,7 @@ func (q *Queries) CountUserMedia(ctx context.Context, userID string) (int64, err
 }
 
 const createMedia = `-- name: CreateMedia :exec
-INSERT INTO media (user_id, timestamp, media_id, creation_date, filename, base_url, old_size, new_size, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO media (user_id, timestamp, media_id, creation_date, filename, base_url, old_size, new_size, step, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
 `
 
 type CreateMediaParams struct {
@@ -61,17 +61,56 @@ func (q *Queries) CreateMedia(ctx context.Context, arg CreateMediaParams) error 
 	return err
 }
 
-const getMedias = `-- name: GetMedias :many
-SELECT user_id, timestamp, media_id, creation_date, filename, base_url, old_size, new_size, done FROM media WHERE user_id = ? and timestamp = ?
+const getMedia = `-- name: GetMedia :one
+SELECT user_id, timestamp, media_id, creation_date, filename, base_url, old_size, new_size, step, done FROM media WHERE media_id = ? and user_id = ? and timestamp = ?
 `
 
-type GetMediasParams struct {
+type GetMediaParams struct {
+	MediaID   string `json:"media_id"`
 	UserID    string `json:"user_id"`
 	Timestamp int64  `json:"timestamp"`
 }
 
-func (q *Queries) GetMedias(ctx context.Context, arg GetMediasParams) ([]Medium, error) {
-	rows, err := q.query(ctx, q.getMediasStmt, getMedias, arg.UserID, arg.Timestamp)
+func (q *Queries) GetMedia(ctx context.Context, arg GetMediaParams) (Medium, error) {
+	row := q.queryRow(ctx, q.getMediaStmt, getMedia, arg.MediaID, arg.UserID, arg.Timestamp)
+	var i Medium
+	err := row.Scan(
+		&i.UserID,
+		&i.Timestamp,
+		&i.MediaID,
+		&i.CreationDate,
+		&i.Filename,
+		&i.BaseUrl,
+		&i.OldSize,
+		&i.NewSize,
+		&i.Step,
+		&i.Done,
+	)
+	return i, err
+}
+
+const getMediaCurrentStep = `-- name: GetMediaCurrentStep :one
+SELECT step FROM media WHERE media_id = ? and user_id = ?
+`
+
+type GetMediaCurrentStepParams struct {
+	MediaID string `json:"media_id"`
+	UserID  string `json:"user_id"`
+}
+
+func (q *Queries) GetMediaCurrentStep(ctx context.Context, arg GetMediaCurrentStepParams) (int64, error) {
+	row := q.queryRow(ctx, q.getMediaCurrentStepStmt, getMediaCurrentStep, arg.MediaID, arg.UserID)
+	var step int64
+	err := row.Scan(&step)
+	return step, err
+}
+
+const getMedias = `-- name: GetMedias :many
+SELECT user_id, timestamp, media_id, creation_date, filename, base_url, old_size, new_size, step, done FROM media WHERE user_id = ? and step = 0
+`
+
+func (q *Queries) GetMedias(ctx context.Context, userID string) ([]Medium, error) {
+	rows, err := q.query(ctx, q.getMediasStmt, getMedias, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +127,7 @@ func (q *Queries) GetMedias(ctx context.Context, arg GetMediasParams) ([]Medium,
 			&i.BaseUrl,
 			&i.OldSize,
 			&i.NewSize,
+			&i.Step,
 			&i.Done,
 		); err != nil {
 			return nil, err
@@ -124,6 +164,63 @@ type SetMediaDoneParams struct {
 
 func (q *Queries) SetMediaDone(ctx context.Context, arg SetMediaDoneParams) error {
 	_, err := q.exec(ctx, q.setMediaDoneStmt, setMediaDone, arg.Done, arg.NewSize, arg.MediaID)
+	return err
+}
+
+const setMediaNewSize = `-- name: SetMediaNewSize :exec
+UPDATE media SET new_size = ? WHERE media_id = ? and user_id = ? and timestamp = ?
+`
+
+type SetMediaNewSizeParams struct {
+	NewSize   sql.NullInt64 `json:"new_size"`
+	MediaID   string        `json:"media_id"`
+	UserID    string        `json:"user_id"`
+	Timestamp int64         `json:"timestamp"`
+}
+
+func (q *Queries) SetMediaNewSize(ctx context.Context, arg SetMediaNewSizeParams) error {
+	_, err := q.exec(ctx, q.setMediaNewSizeStmt, setMediaNewSize,
+		arg.NewSize,
+		arg.MediaID,
+		arg.UserID,
+		arg.Timestamp,
+	)
+	return err
+}
+
+const setMediaOldSize = `-- name: SetMediaOldSize :exec
+UPDATE media SET old_size = ? WHERE media_id = ? and user_id = ? and timestamp = ?
+`
+
+type SetMediaOldSizeParams struct {
+	OldSize   sql.NullInt64 `json:"old_size"`
+	MediaID   string        `json:"media_id"`
+	UserID    string        `json:"user_id"`
+	Timestamp int64         `json:"timestamp"`
+}
+
+func (q *Queries) SetMediaOldSize(ctx context.Context, arg SetMediaOldSizeParams) error {
+	_, err := q.exec(ctx, q.setMediaOldSizeStmt, setMediaOldSize,
+		arg.OldSize,
+		arg.MediaID,
+		arg.UserID,
+		arg.Timestamp,
+	)
+	return err
+}
+
+const setMediaStep = `-- name: SetMediaStep :exec
+UPDATE media SET step = ? WHERE media_id = ? and user_id = ?
+`
+
+type SetMediaStepParams struct {
+	Step    int64  `json:"step"`
+	MediaID string `json:"media_id"`
+	UserID  string `json:"user_id"`
+}
+
+func (q *Queries) SetMediaStep(ctx context.Context, arg SetMediaStepParams) error {
+	_, err := q.exec(ctx, q.setMediaStepStmt, setMediaStep, arg.Step, arg.MediaID, arg.UserID)
 	return err
 }
 

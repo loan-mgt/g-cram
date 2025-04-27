@@ -26,6 +26,7 @@ CREATE TABLE media (
     base_url TEXT NOT NULL,
     old_size INTEGER,
     new_size INTEGER,
+    step INTEGER NOT NULL,
     done INTEGER NOT NULL,
     PRIMARY KEY (user_id, timestamp, media_id),
     FOREIGN KEY (user_id, timestamp) REFERENCES jobs(user_id, timestamp)
