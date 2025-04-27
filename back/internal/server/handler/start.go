@@ -55,6 +55,20 @@ func (h *APIHandler) Start(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
+		params := sqlc.SetMediaStepParams{
+			MediaID:   media.MediaID,
+			UserID:    user.ID,
+			Timestamp: media.Timestamp,
+			Step:      media.Step + 1,
+		}
+
+		// move media to next step
+		if err := h.db.SetMediaStep(c.Request.Context(), params); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{"message": "ok"})

@@ -20,7 +20,8 @@ func DownloadVideo(msg Msg) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	req.Header.Set("Authorization", msg.Token)
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", msg.Token))
 
 	fileSize, err := saveVideoToFile(msg, req)
 	if err != nil {
@@ -55,6 +56,11 @@ func saveVideoToFile(msg Msg, req *http.Request) (int64, error) {
 		return 0, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("Error downloading video: %s\n", resp.Status)
+		return 0, fmt.Errorf("Error downloading video: %s", resp.Status)
+	}
 
 	_, err = io.Copy(f, resp.Body)
 	if err != nil {

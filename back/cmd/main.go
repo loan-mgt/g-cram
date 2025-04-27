@@ -38,6 +38,7 @@ func newWebSocketManager() *ws.WebSocketManager {
 
 func startListener(ws *ws.WebSocketManager, store *db.Store, cfg *config.Config) {
 	go service.StartUploadDoneListener(ws, store, cfg)
+	go service.StartDownloadDoneListener(ws, store, cfg)
 }
 
 func newRouter(store *db.Store, amqpConn *service.AMQPConnection, ws *ws.WebSocketManager, cfg *config.Config) *gin.Engine {

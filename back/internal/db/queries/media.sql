@@ -20,13 +20,13 @@ SELECT * FROM media WHERE media_id = ? and user_id = ? and timestamp = ?;
 UPDATE media SET timestamp = ? WHERE media_id = ? and user_id = ?;
 
 -- name: CountUserMedia :one
-SELECT COUNT(*) FROM media WHERE user_id = ? and done = 0;
+SELECT COUNT(*) FROM media WHERE user_id = ? and step = 0;
 
 -- name: GetMediaCurrentStep :one
 SELECT step FROM media WHERE media_id = ? and user_id = ?;
 
 -- name: SetMediaStep :exec
-UPDATE media SET step = ? WHERE media_id = ? and user_id = ?;
+UPDATE media SET step = ? WHERE media_id = ? and user_id = ? and timestamp = ?;
 
 -- name: SetMediaNewSize :exec
 UPDATE media SET new_size = ? WHERE media_id = ? and user_id = ? and timestamp = ?;

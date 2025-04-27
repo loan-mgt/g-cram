@@ -20,7 +20,7 @@ func (q *Queries) ClearUserTmpMedia(ctx context.Context, userID string) error {
 }
 
 const countUserMedia = `-- name: CountUserMedia :one
-SELECT COUNT(*) FROM media WHERE user_id = ? and done = 0
+SELECT COUNT(*) FROM media WHERE user_id = ? and step = 0
 `
 
 func (q *Queries) CountUserMedia(ctx context.Context, userID string) (int64, error) {
@@ -210,17 +210,23 @@ func (q *Queries) SetMediaOldSize(ctx context.Context, arg SetMediaOldSizeParams
 }
 
 const setMediaStep = `-- name: SetMediaStep :exec
-UPDATE media SET step = ? WHERE media_id = ? and user_id = ?
+UPDATE media SET step = ? WHERE media_id = ? and user_id = ? and timestamp = ?
 `
 
 type SetMediaStepParams struct {
-	Step    int64  `json:"step"`
-	MediaID string `json:"media_id"`
-	UserID  string `json:"user_id"`
+	Step      int64  `json:"step"`
+	MediaID   string `json:"media_id"`
+	UserID    string `json:"user_id"`
+	Timestamp int64  `json:"timestamp"`
 }
 
 func (q *Queries) SetMediaStep(ctx context.Context, arg SetMediaStepParams) error {
-	_, err := q.exec(ctx, q.setMediaStepStmt, setMediaStep, arg.Step, arg.MediaID, arg.UserID)
+	_, err := q.exec(ctx, q.setMediaStepStmt, setMediaStep,
+		arg.Step,
+		arg.MediaID,
+		arg.UserID,
+		arg.Timestamp,
+	)
 	return err
 }
 

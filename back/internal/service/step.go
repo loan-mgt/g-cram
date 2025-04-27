@@ -12,6 +12,7 @@ import (
 )
 
 func StartDownloadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *config.Config) {
+	fmt.Println("StartDownloadDoneListener")
 	ctx := context.Background()
 	notification, err := NewAMQPConnection(config.New(), "downloader_done")
 	if err != nil {
@@ -32,19 +33,21 @@ func StartDownloadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *confi
 
 	for d := range msgs {
 		var payload struct {
-			MediaID   string `json:"media_id"`
-			UserID    string `json:"user_id"`
+			MediaId   string `json:"mediaId"`
+			UserId    string `json:"userId"`
 			Timestamp int64  `json:"timestamp"`
-			FileSize  int64  `json:"file_size"`
+			FileSize  int64  `json:"fileSize"`
 		}
 
 		if err := json.Unmarshal(d.Body, &payload); err != nil {
 			continue
 		}
 
+		fmt.Println(payload)
+
 		params := sqlc.SetMediaNewSizeParams{
-			MediaID:   payload.MediaID,
-			UserID:    payload.UserID,
+			MediaID:   payload.MediaId,
+			UserID:    payload.UserId,
 			Timestamp: payload.Timestamp,
 			NewSize: sql.NullInt64{
 				Int64: payload.FileSize,
@@ -52,14 +55,16 @@ func StartDownloadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *confi
 			},
 		}
 
+		fmt.Println("media_id", payload.MediaId, "file_size", payload.FileSize, "timestamp", payload.Timestamp)
+
 		if err := db.SetMediaNewSize(ctx, params); err != nil {
 			fmt.Println(err)
 			continue
 		}
 
 		media, err := db.GetMedia(ctx, sqlc.GetMediaParams{
-			MediaID:   payload.MediaID,
-			UserID:    payload.UserID,
+			MediaID:   payload.MediaId,
+			UserID:    payload.UserId,
 			Timestamp: payload.Timestamp,
 		})
 		if err != nil {
@@ -67,12 +72,12 @@ func StartDownloadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *confi
 			continue
 		}
 
-		if err := ws.SendMessageToClient(payload.UserID, fmt.Sprintf("{\"event\":\"DownloadDone\",\"step\":\"%d\"}", media.Step)); err != nil {
+		if err := ws.SendMessageToClient(payload.UserId, fmt.Sprintf("{\"event\":\"DownloadDone\",\"step\":\"%d\"}", media.Step)); err != nil {
 			fmt.Println(err)
 			continue
 		}
 
-		if err := PushNotification(db, cfg, payload.UserID, fmt.Sprintf("Notification: %s", media.Filename), "download-done:"+media.Filename); err != nil {
+		if err := PushNotification(db, cfg, payload.UserId, fmt.Sprintf("Notification: %s", media.Filename), "download-done:"+media.Filename); err != nil {
 			fmt.Println(err)
 			continue
 		}
@@ -82,8 +87,8 @@ func StartDownloadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *confi
 			UserID    string `json:"user_id"`
 			Timestamp int64  `json:"timestamp"`
 		}{
-			MediaID:   payload.MediaID,
-			UserID:    payload.UserID,
+			MediaID:   payload.MediaId,
+			UserID:    payload.UserId,
 			Timestamp: payload.Timestamp,
 		}
 

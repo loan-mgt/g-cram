@@ -24,6 +24,8 @@ func HandleDownload(body []byte, conn *service.AMQPConnection) {
 
 	fmt.Println("Video downloaded successfully")
 
+	fmt.Println("media_id", msg.MediaId, "file_size", fileSize, "timestamp", msg.Timestamp, "user_id", msg.UserId)
+
 	err = conn.SendNotificationRequest(msg.MediaId, msg.UserId, msg.Timestamp, fileSize)
 	if err != nil {
 		fmt.Printf("Error uploading video: %s\n", err)
