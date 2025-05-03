@@ -9,6 +9,7 @@ const loginButton = document.querySelector("#login-button");
 const pickerLink = document.querySelector("#picker");
 const pickerButton = document.querySelector("#picker2");
 const urlFragment = window.location.hash;
+const videoCount = document.querySelector("#video-count");
 let sessionId;
 let pickerUri;
 let picker;
@@ -17,13 +18,17 @@ let pullForImagesTimeout;
 pickerButton.disable = true;
 
 pickerButton.addEventListener("click", function () {
+  handlePciker();
+});
+
+function handlePciker() {
   if (!picker) {
     picker = window.open(pickerUri, "popup", "width=600,height=600");
     pullForImages();
   } else {
     picker.focus();
   }
-});
+}
 
 // handle ongoing OAuth 2.0 flow
 const urlParams = new URLSearchParams(window.location.search);
@@ -46,10 +51,10 @@ if (urlParams.has("code")) {
 
 // user is loged in
 function logedIn() {
-  loginButton.style.display = "none";
   startWebSocket();
   disaplyContent();
   getUserInfo();
+  setScreen(2);
 }
 
 function storeUserData(data) {
@@ -247,16 +252,10 @@ function handleMedia(mediaItems) {
   })
     .then((response) => response.json())
     .then((responseData) => {
+      setScreen(3);
       console.log("responseData", responseData);
-      const nbMedia = responseData.nb_media;
-      const mediaCountElement = document.createElement("p");
-      mediaCountElement.textContent = `Number of selected items: ${nbMedia}`;
-      document.body.appendChild(mediaCountElement);
+      videoCount.textContent = responseData.nb_video;
     });
-
-  mediaItems.forEach((mediaItem) => {
-    mediaHolder.appendChild(imageFactory(mediaItem));
-  });
 }
 
 function imageFactory(mediaItem, w = 128, h = 128) {
@@ -447,4 +446,23 @@ async function unsubscribeButtonHandler() {
 function logout() {
   localStorage.clear();
   location.reload();
+}
+
+
+function setScreen(nb) {
+  let screens = document.querySelectorAll('main');
+
+  screens.forEach((screen) => {
+    if (screen.id === `screen-${nb}`) {
+      screen.classList.remove('hidden')
+      screen.classList.add('flex')
+    } else {
+      screen.classList.remove('flex')
+      screen.classList.add('hidden')
+    }
+  })
+}
+
+function start() {
+  setScreen(1)
 }

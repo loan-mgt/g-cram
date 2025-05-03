@@ -5,32 +5,123 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Cramer - Google Photos Video Viewer</title>
-    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/output.css">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 
-<body>
+<body class="min-h-[100dvh] flex flex-col gap-12">
 
-    <h1>Google Photos - Video Viewer</h1>
+    <header class="flex items-center justify-between p-2">
+        <div class="flex items-center gap-2">
+            <img class="h-12 w-auto" src="/favicon.svg" alt="logo">
+            <h1 class="font-bold text-2xl">g-cram</h1>
+        </div>
 
-    <div id="login-button">
-        <button onclick="oauthSignIn()">Login with Google</button>
-    </div>
+        <div class="flex items-center p-4">
+            <a class="hover:underline" href="https://github.com/loan-mgt/g-cram" target="_blank">
+                Github
+            </a>
+        </div>
+    </header>
+
+    <main id="screen-0" class="gap-4 flex flex-col items-center">
+
+        <img class="h-28 w-auto" src="/favicon.svg" alt="logo">
+        <div class="flex flex-col gap-2 items-center">
+            <h1 class="font-bold text-3xl text-center">Free up space on Google Photos<br> by compressing videos</h1>
+            <p class="text-lg text-center">Save 60-80% of storage<br> per video</p>
+        </div>
+
+        <div class="flex flex-col gap-2 items-center">
+            <button class="bg-primary rounded-lg text-white px-8 py-2 text-2xl cursor-pointer" onclick="start()">Get
+                started</button>
+            <p class="text-xs text-center font-extralight">Requires access to Google account</p>
+        </div>
 
 
-    <button onclick="logout()">logout</button>
-    <a id="picker" target="_blank">picker</a>
-    <button id="picker2">picker</button>
+    </main>
 
-    <button onclick="requestNotification()">notification</button>
-    <button onclick="registerServiceWorker()">service-worker</button>
+    <main id="screen-1" class="gap-4 flex-col items-center hidden">
+
+        <img class="h-28 w-auto" src="/favicon.svg" alt="logo">
+        <div class="flex flex-col gap-2 items-center">
+            <h1 class="font-bold text-3xl text-center">Login in to your Google Account</h1>
+            <p class="text-lg text-center">Grant access to Google Photos</p>
+        </div>
+
+        <div class="flex flex-col gap-2 items-center">
+            <button class="bg-primary rounded-lg text-white px-8 py-2 text-2xl cursor-pointer"
+                onclick="oauthSignIn()">Login</button>
+        </div>
 
 
-    <div id="media-holder">
+    </main>
 
-    </div>
-    <button onclick="startCompression()">start compression</button>
+    <main id="screen-2" class="gap-4 flex-col items-center hidden">
+
+        <img class="h-28 w-auto" src="/favicon.svg" alt="logo">
+        <div class="flex flex-col gap-2 items-center">
+            <h1 class="font-bold text-3xl text-center">Pick videos to compress</h1>
+            <p class="text-lg text-center">Works best on long videos</p>
+        </div>
+
+        <div class="flex flex-col gap-2 items-center">
+            <button class="bg-primary rounded-lg text-white px-8 py-2 text-2xl cursor-pointer"
+                onclick="handlePciker()">Pick videos</button>
+        </div>
+
+
+    </main>
+
+    <main id="screen-3" class="gap-4 flex-col items-center hidden">
+
+        <img class="h-28 w-auto" src="/favicon.svg" alt="logo">
+        <div class="flex flex-col gap-2 items-center">
+            <h1 class="font-bold text-3xl text-center">Start compression</h1>
+            <div class="flex flex-col gap-2">
+                    <label class="inline-flex items-center cursor-pointer gap-2">
+                        <input type="checkbox" checked disabled class="sr-only peer">
+                        <div
+                            class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none    rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1.5px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all  peer-checked:bg-primary ">
+                        </div>
+                        <span class="text-lg text-center">Get notified when the job is done</span>
+
+                    </label>
+
+                    <label class="inline-flex items-center cursor-pointer gap-2">
+                        <input type="checkbox" disabled class="sr-only peer">
+                        <div
+                            class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none   rounded-full pee peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all  peer-checked:bg-primary ">
+                        </div>
+                        <span class="text-lg text-center opacity-70">Delete original media</span>
+
+                    </label>
+
+            </div>
+
+        </div>
+
+        <div class="flex flex-col gap-2 items-center">
+            <button class="bg-primary rounded-lg text-white px-8 py-2 text-2xl cursor-pointer"
+                onclick="startCompression()">Start compression</button>
+            <p class="text-xs text-center font-extralight"><span id="video-count">0</span> videos selected</p>
+
+        </div>
+
+
+    </main>
+<div class="grow"></div>
+<div class="flex gap-2">
+    <button class="bg-gray-200 p-1 cursor-pointer" onclick="logout()">logout</button>
+
+<button class="bg-gray-200 p-1 cursor-pointer" onclick="requestNotification()">notification</button>
+<button class="bg-gray-200 p-1 cursor-pointer" onclick="registerServiceWorker()">service-worker</button>
+
+
+</div>
+
 </body>
+
 <script src="/public/alpine.min.js" defer></script>
 <script src="/public/main.js"></script>
 

@@ -3,3 +3,4 @@ media/in/*
 media/out/*
 .env
 database/*
+front/node_modules/*
