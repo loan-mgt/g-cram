@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
 )
 
-func CreateVideoWithMetadata(filename, creationDate string) (int64, error) {
+func CreateVideoWithMetadata(filename string, creationDate int64) (int64, error) {
 	inputPath := fmt.Sprintf("/tmp/in/%s.mp4", filename)
 	outputPath := fmt.Sprintf("/tmp/out/%s.mp4", filename)
 
@@ -17,8 +18,13 @@ func CreateVideoWithMetadata(filename, creationDate string) (int64, error) {
 		}
 	}
 
+	creationDateFormated := time.Unix(0, creationDate*int64(time.Millisecond)).Format("2006-01-02T15:04:05.000Z")
+
+	// log creation date
+	fmt.Println("Creation date:", creationDate, creationDateFormated)
+
 	cmd := exec.Command("ffmpeg", "-i", inputPath, "-vcodec", "libx265", "-crf", "28", "-metadata",
-		fmt.Sprintf("creation_time=%s", creationDate), "-c:a", "copy", "-f", "mp4", outputPath)
+		fmt.Sprintf("creation_time=%s", creationDateFormated), "-c:a", "copy", "-f", "mp4", outputPath)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {

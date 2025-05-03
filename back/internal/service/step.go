@@ -81,12 +81,12 @@ func StartDownloadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *confi
 			MediaID      string `json:"mediaId"`
 			UserID       string `json:"userId"`
 			Timestamp    int64  `json:"timestamp"`
-			CreationDate string `json:"creationDate"`
+			CreationDate int64  `json:"creationDate"`
 		}{
 			MediaID:      payload.MediaId,
 			UserID:       payload.UserId,
 			Timestamp:    payload.Timestamp,
-			CreationDate: fmt.Sprintf("%d", media.CreationDate),
+			CreationDate: media.CreationDate,
 		}
 
 		jsonData, err := json.Marshal(nextPayload)

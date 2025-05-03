@@ -13,7 +13,7 @@ func HandleCompression(body []byte, amqpConn *service.AMQPConnection) {
 		MediaId      string `json:"mediaId"`
 		UserId       string `json:"userId"`
 		Timestamp    int64  `json:"timestamp"`
-		CreationDate string `json:"creationDate"`
+		CreationDate int64  `json:"creationDate"`
 	}
 
 	err := json.Unmarshal(body, &msg)
