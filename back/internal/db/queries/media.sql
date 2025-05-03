@@ -17,7 +17,7 @@ SELECT * FROM media WHERE user_id = ? and step = 0;
 SELECT * FROM media WHERE media_id = ? and user_id = ? and timestamp = ?;
 
 -- name: SetMediaTimestamp :exec
-UPDATE media SET timestamp = ? WHERE media_id = ? and user_id = ?;
+UPDATE media SET timestamp = ? WHERE media_id = ? and user_id = ? and timestamp = ?;
 
 -- name: CountUserMedia :one
 SELECT COUNT(*) FROM media WHERE user_id = ? and step = 0;
@@ -33,3 +33,12 @@ UPDATE media SET new_size = ? WHERE media_id = ? and user_id = ? and timestamp =
 
 -- name: SetMediaOldSize :exec
 UPDATE media SET old_size = ? WHERE media_id = ? and user_id = ? and timestamp = ?;
+
+-- name: CountUserMediaInJob :one
+SELECT COUNT(*) FROM media WHERE user_id = ? and timestamp = ?;
+
+-- name: CountUserMediaInJobAtStep :one
+SELECT COUNT(*) FROM media WHERE user_id = ? and timestamp = ? and step >= ?;
+
+-- name: GetJobSpace :one
+SELECT SUM(new_size) as sum_new_size, SUM(old_size) as sum_old_size FROM media WHERE user_id = ? and timestamp = ?;

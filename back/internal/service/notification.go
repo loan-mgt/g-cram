@@ -8,6 +8,7 @@ import (
 	"loan-mgt/g-cram/internal/db"
 	"loan-mgt/g-cram/internal/db/sqlc"
 	"loan-mgt/g-cram/internal/server/ws"
+	"math"
 )
 
 func StartUploadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *config.Config) {
@@ -77,9 +78,51 @@ func StartUploadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *config.
 			fmt.Println("Error sending message to WebSocket:", err)
 		}
 
-		err = PushNotification(db, cfg, payload.UserId, fmt.Sprintf("Upload done: %s", media.Filename), media.Filename)
+		paramCount := sqlc.CountUserMediaInJobParams{
+			UserID:    payload.UserId,
+			Timestamp: payload.Timestamp,
+		}
+
+		nbMedia, err := db.CountUserMediaInJob(context.Background(), paramCount)
+		if err != nil {
+			fmt.Println("Error getting nb media:", err)
+			nbMedia = 0
+			continue
+		}
+
+		nbMediaDone, err := db.CountUserMediaInJobAtStep(context.Background(), sqlc.CountUserMediaInJobAtStepParams{
+			UserID:    payload.UserId,
+			Timestamp: payload.Timestamp,
+			Step:      2,
+		})
+		if err != nil {
+			fmt.Println("Error getting nb media done:", err)
+			nbMediaDone = 0
+			continue
+		}
+
+		err = PushNotification(db, cfg, payload.UserId, fmt.Sprintf("Job done: %d/%d", nbMediaDone, nbMedia), fmt.Sprintf("%d", payload.Timestamp))
 		if err != nil {
 			fmt.Println("Error sending push notification:", err)
+		}
+
+		if nbMedia == nbMediaDone {
+
+			jobSpace, err := db.GetJobSpace(context.Background(), sqlc.GetJobSpaceParams{
+				UserID:    payload.UserId,
+				Timestamp: payload.Timestamp,
+			})
+			if err != nil {
+				fmt.Println("Error getting job space:", err)
+				continue
+			}
+
+			spaceSaved := math.Round((1 - (jobSpace.SumNewSize.Float64 / jobSpace.SumOldSize.Float64)) * 100)
+
+			err = PushNotificationFull(db, cfg, payload.UserId, fmt.Sprintf("Job done: %.0f%% space saved", spaceSaved), fmt.Sprintf("%dDONE", payload.Timestamp), false)
+			if err != nil {
+				fmt.Println("Error sending push notification:", err)
+			}
 		}
 
 	}

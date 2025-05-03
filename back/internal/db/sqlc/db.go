@@ -30,6 +30,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.countUserMediaStmt, err = db.PrepareContext(ctx, countUserMedia); err != nil {
 		return nil, fmt.Errorf("error preparing query CountUserMedia: %w", err)
 	}
+	if q.countUserMediaInJobStmt, err = db.PrepareContext(ctx, countUserMediaInJob); err != nil {
+		return nil, fmt.Errorf("error preparing query CountUserMediaInJob: %w", err)
+	}
+	if q.countUserMediaInJobAtStepStmt, err = db.PrepareContext(ctx, countUserMediaInJobAtStep); err != nil {
+		return nil, fmt.Errorf("error preparing query CountUserMediaInJobAtStep: %w", err)
+	}
 	if q.createJobStmt, err = db.PrepareContext(ctx, createJob); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateJob: %w", err)
 	}
@@ -38,6 +44,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
+	}
+	if q.getJobSpaceStmt, err = db.PrepareContext(ctx, getJobSpace); err != nil {
+		return nil, fmt.Errorf("error preparing query GetJobSpace: %w", err)
 	}
 	if q.getMediaStmt, err = db.PrepareContext(ctx, getMedia); err != nil {
 		return nil, fmt.Errorf("error preparing query GetMedia: %w", err)
@@ -96,6 +105,16 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing countUserMediaStmt: %w", cerr)
 		}
 	}
+	if q.countUserMediaInJobStmt != nil {
+		if cerr := q.countUserMediaInJobStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countUserMediaInJobStmt: %w", cerr)
+		}
+	}
+	if q.countUserMediaInJobAtStepStmt != nil {
+		if cerr := q.countUserMediaInJobAtStepStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countUserMediaInJobAtStepStmt: %w", cerr)
+		}
+	}
 	if q.createJobStmt != nil {
 		if cerr := q.createJobStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createJobStmt: %w", cerr)
@@ -109,6 +128,11 @@ func (q *Queries) Close() error {
 	if q.createUserStmt != nil {
 		if cerr := q.createUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createUserStmt: %w", cerr)
+		}
+	}
+	if q.getJobSpaceStmt != nil {
+		if cerr := q.getJobSpaceStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getJobSpaceStmt: %w", cerr)
 		}
 	}
 	if q.getMediaStmt != nil {
@@ -218,51 +242,57 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                         DBTX
-	tx                         *sql.Tx
-	clearUserTmpMediaStmt      *sql.Stmt
-	countUserMediaStmt         *sql.Stmt
-	createJobStmt              *sql.Stmt
-	createMediaStmt            *sql.Stmt
-	createUserStmt             *sql.Stmt
-	getMediaStmt               *sql.Stmt
-	getMediaCurrentStepStmt    *sql.Stmt
-	getMediasStmt              *sql.Stmt
-	getUserStmt                *sql.Stmt
-	getUserByTokenHashStmt     *sql.Stmt
-	getUserJobDetailsStmt      *sql.Stmt
-	removeMediaStmt            *sql.Stmt
-	setMediaDoneStmt           *sql.Stmt
-	setMediaNewSizeStmt        *sql.Stmt
-	setMediaOldSizeStmt        *sql.Stmt
-	setMediaStepStmt           *sql.Stmt
-	setMediaTimestampStmt      *sql.Stmt
-	updateUserSubscriptionStmt *sql.Stmt
-	updateUserTokenStmt        *sql.Stmt
+	db                            DBTX
+	tx                            *sql.Tx
+	clearUserTmpMediaStmt         *sql.Stmt
+	countUserMediaStmt            *sql.Stmt
+	countUserMediaInJobStmt       *sql.Stmt
+	countUserMediaInJobAtStepStmt *sql.Stmt
+	createJobStmt                 *sql.Stmt
+	createMediaStmt               *sql.Stmt
+	createUserStmt                *sql.Stmt
+	getJobSpaceStmt               *sql.Stmt
+	getMediaStmt                  *sql.Stmt
+	getMediaCurrentStepStmt       *sql.Stmt
+	getMediasStmt                 *sql.Stmt
+	getUserStmt                   *sql.Stmt
+	getUserByTokenHashStmt        *sql.Stmt
+	getUserJobDetailsStmt         *sql.Stmt
+	removeMediaStmt               *sql.Stmt
+	setMediaDoneStmt              *sql.Stmt
+	setMediaNewSizeStmt           *sql.Stmt
+	setMediaOldSizeStmt           *sql.Stmt
+	setMediaStepStmt              *sql.Stmt
+	setMediaTimestampStmt         *sql.Stmt
+	updateUserSubscriptionStmt    *sql.Stmt
+	updateUserTokenStmt           *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                         tx,
-		tx:                         tx,
-		clearUserTmpMediaStmt:      q.clearUserTmpMediaStmt,
-		countUserMediaStmt:         q.countUserMediaStmt,
-		createJobStmt:              q.createJobStmt,
-		createMediaStmt:            q.createMediaStmt,
-		createUserStmt:             q.createUserStmt,
-		getMediaStmt:               q.getMediaStmt,
-		getMediaCurrentStepStmt:    q.getMediaCurrentStepStmt,
-		getMediasStmt:              q.getMediasStmt,
-		getUserStmt:                q.getUserStmt,
-		getUserByTokenHashStmt:     q.getUserByTokenHashStmt,
-		getUserJobDetailsStmt:      q.getUserJobDetailsStmt,
-		removeMediaStmt:            q.removeMediaStmt,
-		setMediaDoneStmt:           q.setMediaDoneStmt,
-		setMediaNewSizeStmt:        q.setMediaNewSizeStmt,
-		setMediaOldSizeStmt:        q.setMediaOldSizeStmt,
-		setMediaStepStmt:           q.setMediaStepStmt,
-		setMediaTimestampStmt:      q.setMediaTimestampStmt,
-		updateUserSubscriptionStmt: q.updateUserSubscriptionStmt,
-		updateUserTokenStmt:        q.updateUserTokenStmt,
+		db:                            tx,
+		tx:                            tx,
+		clearUserTmpMediaStmt:         q.clearUserTmpMediaStmt,
+		countUserMediaStmt:            q.countUserMediaStmt,
+		countUserMediaInJobStmt:       q.countUserMediaInJobStmt,
+		countUserMediaInJobAtStepStmt: q.countUserMediaInJobAtStepStmt,
+		createJobStmt:                 q.createJobStmt,
+		createMediaStmt:               q.createMediaStmt,
+		createUserStmt:                q.createUserStmt,
+		getJobSpaceStmt:               q.getJobSpaceStmt,
+		getMediaStmt:                  q.getMediaStmt,
+		getMediaCurrentStepStmt:       q.getMediaCurrentStepStmt,
+		getMediasStmt:                 q.getMediasStmt,
+		getUserStmt:                   q.getUserStmt,
+		getUserByTokenHashStmt:        q.getUserByTokenHashStmt,
+		getUserJobDetailsStmt:         q.getUserJobDetailsStmt,
+		removeMediaStmt:               q.removeMediaStmt,
+		setMediaDoneStmt:              q.setMediaDoneStmt,
+		setMediaNewSizeStmt:           q.setMediaNewSizeStmt,
+		setMediaOldSizeStmt:           q.setMediaOldSizeStmt,
+		setMediaStepStmt:              q.setMediaStepStmt,
+		setMediaTimestampStmt:         q.setMediaTimestampStmt,
+		updateUserSubscriptionStmt:    q.updateUserSubscriptionStmt,
+		updateUserTokenStmt:           q.updateUserTokenStmt,
 	}
 }

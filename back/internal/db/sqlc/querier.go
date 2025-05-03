@@ -12,9 +12,12 @@ import (
 type Querier interface {
 	ClearUserTmpMedia(ctx context.Context, userID string) error
 	CountUserMedia(ctx context.Context, userID string) (int64, error)
+	CountUserMediaInJob(ctx context.Context, arg CountUserMediaInJobParams) (int64, error)
+	CountUserMediaInJobAtStep(ctx context.Context, arg CountUserMediaInJobAtStepParams) (int64, error)
 	CreateJob(ctx context.Context, userID string) error
 	CreateMedia(ctx context.Context, arg CreateMediaParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
+	GetJobSpace(ctx context.Context, arg GetJobSpaceParams) (GetJobSpaceRow, error)
 	GetMedia(ctx context.Context, arg GetMediaParams) (Medium, error)
 	GetMediaCurrentStep(ctx context.Context, arg GetMediaCurrentStepParams) (int64, error)
 	GetMedias(ctx context.Context, userID string) ([]Medium, error)

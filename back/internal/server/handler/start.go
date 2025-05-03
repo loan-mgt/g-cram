@@ -3,9 +3,11 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"loan-mgt/g-cram/internal/db/sqlc"
 	"loan-mgt/g-cram/internal/service"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +32,21 @@ func (h *APIHandler) Start(c *gin.Context) {
 		return
 	}
 
+	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+
 	for _, media := range mediaItems {
+
+		// update media to current timestamp
+		if err := h.db.SetMediaTimestamp(c.Request.Context(), sqlc.SetMediaTimestampParams{
+			MediaID:     media.MediaID,
+			UserID:      user.ID,
+			Timestamp:   timestamp,
+			Timestamp_2: media.Timestamp,
+		}); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
 		message := struct {
 			Token     string `json:"token"`
 			MediaId   string `json:"mediaId"`
@@ -41,7 +57,7 @@ func (h *APIHandler) Start(c *gin.Context) {
 			Token:     accessToken,
 			MediaId:   media.MediaID,
 			UserId:    media.UserID,
-			Timestamp: media.Timestamp,
+			Timestamp: timestamp,
 			BaseUrl:   media.BaseUrl,
 		}
 
@@ -59,7 +75,7 @@ func (h *APIHandler) Start(c *gin.Context) {
 		params := sqlc.SetMediaStepParams{
 			MediaID:   media.MediaID,
 			UserID:    user.ID,
-			Timestamp: media.Timestamp,
+			Timestamp: timestamp,
 			Step:      media.Step + 1,
 		}
 
@@ -69,6 +85,11 @@ func (h *APIHandler) Start(c *gin.Context) {
 			return
 		}
 
+	}
+
+	err = service.PushNotification(h.db, h.cfg, user.ID, fmt.Sprintf("Job start: for %d videos", len(mediaItems)), fmt.Sprintf("%d", timestamp))
+	if err != nil {
+		fmt.Println("Error sending push notification:", err)
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{"message": "ok"})

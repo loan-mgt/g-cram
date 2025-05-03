@@ -30,6 +30,39 @@ func (q *Queries) CountUserMedia(ctx context.Context, userID string) (int64, err
 	return count, err
 }
 
+const countUserMediaInJob = `-- name: CountUserMediaInJob :one
+SELECT COUNT(*) FROM media WHERE user_id = ? and timestamp = ?
+`
+
+type CountUserMediaInJobParams struct {
+	UserID    string `json:"user_id"`
+	Timestamp int64  `json:"timestamp"`
+}
+
+func (q *Queries) CountUserMediaInJob(ctx context.Context, arg CountUserMediaInJobParams) (int64, error) {
+	row := q.queryRow(ctx, q.countUserMediaInJobStmt, countUserMediaInJob, arg.UserID, arg.Timestamp)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countUserMediaInJobAtStep = `-- name: CountUserMediaInJobAtStep :one
+SELECT COUNT(*) FROM media WHERE user_id = ? and timestamp = ? and step >= ?
+`
+
+type CountUserMediaInJobAtStepParams struct {
+	UserID    string `json:"user_id"`
+	Timestamp int64  `json:"timestamp"`
+	Step      int64  `json:"step"`
+}
+
+func (q *Queries) CountUserMediaInJobAtStep(ctx context.Context, arg CountUserMediaInJobAtStepParams) (int64, error) {
+	row := q.queryRow(ctx, q.countUserMediaInJobAtStepStmt, countUserMediaInJobAtStep, arg.UserID, arg.Timestamp, arg.Step)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createMedia = `-- name: CreateMedia :exec
 INSERT INTO media (user_id, timestamp, media_id, creation_date, filename, base_url, old_size, new_size, step, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
 `
@@ -59,6 +92,27 @@ func (q *Queries) CreateMedia(ctx context.Context, arg CreateMediaParams) error 
 		arg.Done,
 	)
 	return err
+}
+
+const getJobSpace = `-- name: GetJobSpace :one
+SELECT SUM(new_size) as sum_new_size, SUM(old_size) as sum_old_size FROM media WHERE user_id = ? and timestamp = ?
+`
+
+type GetJobSpaceParams struct {
+	UserID    string `json:"user_id"`
+	Timestamp int64  `json:"timestamp"`
+}
+
+type GetJobSpaceRow struct {
+	SumNewSize sql.NullFloat64 `json:"sum_new_size"`
+	SumOldSize sql.NullFloat64 `json:"sum_old_size"`
+}
+
+func (q *Queries) GetJobSpace(ctx context.Context, arg GetJobSpaceParams) (GetJobSpaceRow, error) {
+	row := q.queryRow(ctx, q.getJobSpaceStmt, getJobSpace, arg.UserID, arg.Timestamp)
+	var i GetJobSpaceRow
+	err := row.Scan(&i.SumNewSize, &i.SumOldSize)
+	return i, err
 }
 
 const getMedia = `-- name: GetMedia :one
@@ -237,16 +291,22 @@ func (q *Queries) SetMediaStep(ctx context.Context, arg SetMediaStepParams) erro
 }
 
 const setMediaTimestamp = `-- name: SetMediaTimestamp :exec
-UPDATE media SET timestamp = ? WHERE media_id = ? and user_id = ?
+UPDATE media SET timestamp = ? WHERE media_id = ? and user_id = ? and timestamp = ?
 `
 
 type SetMediaTimestampParams struct {
-	Timestamp int64  `json:"timestamp"`
-	MediaID   string `json:"media_id"`
-	UserID    string `json:"user_id"`
+	Timestamp   int64  `json:"timestamp"`
+	MediaID     string `json:"media_id"`
+	UserID      string `json:"user_id"`
+	Timestamp_2 int64  `json:"timestamp_2"`
 }
 
 func (q *Queries) SetMediaTimestamp(ctx context.Context, arg SetMediaTimestampParams) error {
-	_, err := q.exec(ctx, q.setMediaTimestampStmt, setMediaTimestamp, arg.Timestamp, arg.MediaID, arg.UserID)
+	_, err := q.exec(ctx, q.setMediaTimestampStmt, setMediaTimestamp,
+		arg.Timestamp,
+		arg.MediaID,
+		arg.UserID,
+		arg.Timestamp_2,
+	)
 	return err
 }

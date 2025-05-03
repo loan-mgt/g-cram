@@ -77,11 +77,6 @@ func StartDownloadDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *confi
 			continue
 		}
 
-		if err := PushNotification(db, cfg, payload.UserId, fmt.Sprintf("Download done: %s", media.Filename), media.Filename); err != nil {
-			fmt.Println(err)
-			continue
-		}
-
 		nextPayload := struct {
 			MediaID      string `json:"mediaId"`
 			UserID       string `json:"userId"`
@@ -171,11 +166,6 @@ func StartCramerDoneListener(ws *ws.WebSocketManager, db *db.Store, cfg *config.
 		}
 
 		if err := ws.SendMessageToClient(payload.UserId, fmt.Sprintf("{\"event\":\"CramerDone\",\"step\":\"%d\"}", media.Step)); err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		if err := PushNotification(db, cfg, payload.UserId, fmt.Sprintf("Compression done: %s", media.Filename), media.Filename); err != nil {
 			fmt.Println(err)
 			continue
 		}

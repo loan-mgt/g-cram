@@ -12,10 +12,11 @@ import (
 )
 
 type Notification struct {
-	Title string `json:"title"`
-	Body  string `json:"body"`
-	Icon  string `json:"icon"`
-	Tag   string `json:"tag"`
+	Title  string `json:"title"`
+	Body   string `json:"body"`
+	Icon   string `json:"icon"`
+	Tag    string `json:"tag"`
+	Silent bool   `json:"silent"`
 }
 
 type Subscription struct {
@@ -77,6 +78,10 @@ func SendPush(subscription Subscription, payload Notification, options Options) 
 }
 
 func PushNotification(db *db.Store, cfg *config.Config, id, body, tag string) error {
+	return PushNotificationFull(db, cfg, id, body, tag, true)
+}
+
+func PushNotificationFull(db *db.Store, cfg *config.Config, id, body, tag string, slient bool) error {
 	user, err := db.GetUser(context.Background(), id)
 	if err != nil {
 		return fmt.Errorf("error getting user: %w", err)
@@ -96,10 +101,11 @@ func PushNotification(db *db.Store, cfg *config.Config, id, body, tag string) er
 
 	// Prepare notification payload
 	payload := Notification{
-		Title: "G-cram",
-		Body:  body,
-		Icon:  "/favicon.svg",
-		Tag:   tag,
+		Title:  "G-cram",
+		Body:   body,
+		Icon:   "/favicon.svg",
+		Tag:    tag,
+		Silent: slient,
 	}
 
 	// Prepare options
