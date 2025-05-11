@@ -6,8 +6,6 @@ const base = "https://photospicker.googleapis.com";
 const api = "http://localhost:8090/api/v1";
 const mediaHolder = document.querySelector("#media-holder");
 const loginButton = document.querySelector("#login-button");
-const pickerLink = document.querySelector("#picker");
-const pickerButton = document.querySelector("#picker2");
 const urlFragment = window.location.hash;
 const videoCount = document.querySelector("#video-count");
 let sessionId;
@@ -15,14 +13,9 @@ let pickerUri;
 let picker;
 let mediaItems;
 let pullForImagesTimeout;
-pickerButton.disable = true;
-
-pickerButton.addEventListener("click", function () {
-  handlePciker();
-});
 
 function handlePciker() {
-  if (!picker) {
+  if (!picker && sessionId) {
     picker = window.open(pickerUri, "popup", "width=600,height=600");
     pullForImages();
   } else {
@@ -46,6 +39,8 @@ if (urlParams.has("code")) {
   // currently logged in
   if (localStorage.getItem("name")) {
     getCurrentUser();
+  }else {
+    setScreen(0);
   }
 }
 
@@ -178,11 +173,7 @@ function disaplyContent() {
   })
     .then((response) => response.json())
     .then((responseData) => {
-      console.log("responseData Post", responseData);
       pickerUri = responseData.pickerUri;
-      pickerButton.disable = false;
-
-      pickerLink.href = responseData.pickerUri;
       sessionId = responseData.id;
     });
 }
@@ -198,9 +189,7 @@ function pullForImages() {
   })
     .then((response) => response.json())
     .then((responseData) => {
-      console.log("responseData get", responseData);
       if (responseData.mediaItemsSet) {
-        console.log("ended", responseData.mediaItemsSet);
         fetchMediaItems(sessionId, localStorage.getItem("access_token"));
       } else {
         pullForImagesTimeout = setTimeout(() => pullForImages(), 5000);
@@ -253,8 +242,7 @@ function handleMedia(mediaItems) {
     .then((response) => response.json())
     .then((responseData) => {
       setScreen(3);
-      console.log("responseData", responseData);
-      videoCount.textContent = responseData.nb_video;
+      videoCount.textContent = responseData.nb_media;
     });
 }
 
@@ -333,8 +321,8 @@ function startCompression() {
     json: true,
   })
     .then((response) => response.json())
-    .then((responseData) => {
-      console.log("responseData", responseData);
+    .then((_) => {
+      setScreen(4);
     });
 }
 

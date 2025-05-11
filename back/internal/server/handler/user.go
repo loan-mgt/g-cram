@@ -47,7 +47,7 @@ func (h *APIHandler) InitUser(c *gin.Context) {
 	// Get tokens using authorization code
 	tokens, err := service.GetRefreshToken(h.cfg, payload.Code)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
+		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
