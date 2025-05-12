@@ -21,7 +21,7 @@ func (h *APIHandler) GetJob(c *gin.Context) {
 	type job struct {
 		Timestamp   int64   `json:"timestamp"`
 		NbMedia     int64   `json:"nb_media"`
-		NbMediaDone int64   `json:"nb_media_done"`
+		NbMediaDone float64 `json:"nb_media_done"`
 		OldSize     float64 `json:"old_size"`
 		NewSize     float64 `json:"new_size"`
 	}
@@ -31,7 +31,7 @@ func (h *APIHandler) GetJob(c *gin.Context) {
 		jobsList = append(jobsList, job{
 			Timestamp:   j.Timestamp,
 			NbMedia:     j.NbMedia,
-			NbMediaDone: j.NbMediaDone,
+			NbMediaDone: j.NbMediaDone.Float64,
 			OldSize:     j.OldSize.Float64,
 			NewSize:     j.NewSize.Float64,
 		})

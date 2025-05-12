@@ -26,3 +26,15 @@ iframe {
     max-width: 600px;
     height: 315px;
 }
+
+.done {
+    list-style-image: url('/done.svg');
+    height: 2rem;
+    width: auto;
+}
+
+.not-done {
+    list-style-image: url('/not-done.svg');
+    height: 2rem;
+    width: auto;
+}

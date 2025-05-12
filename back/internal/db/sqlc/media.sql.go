@@ -198,12 +198,12 @@ func (q *Queries) GetMedias(ctx context.Context, userID string) ([]Medium, error
 }
 
 const getUserJob = `-- name: GetUserJob :many
-SELECT COUNT(*) as nb_media, COUNT(done) as nb_media_done, timestamp, SUM(old_size) as old_size, SUM(new_size) as new_size FROM media WHERE user_id = ? GROUP BY timestamp ORDER BY timestamp DESC LIMIT 5
+SELECT COUNT(*) as nb_media, SUM(done) as nb_media_done, timestamp, SUM(old_size) as old_size, SUM(new_size) as new_size FROM media WHERE user_id = ? GROUP BY timestamp ORDER BY timestamp DESC LIMIT 5
 `
 
 type GetUserJobRow struct {
 	NbMedia     int64           `json:"nb_media"`
-	NbMediaDone int64           `json:"nb_media_done"`
+	NbMediaDone sql.NullFloat64 `json:"nb_media_done"`
 	Timestamp   int64           `json:"timestamp"`
 	OldSize     sql.NullFloat64 `json:"old_size"`
 	NewSize     sql.NullFloat64 `json:"new_size"`

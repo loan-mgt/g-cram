@@ -39,17 +39,16 @@ if (urlParams.has("code")) {
   // currently logged in
   if (localStorage.getItem("name")) {
     getCurrentUser();
-  }else {
-    setScreen(0);
   }
+  setScreen(0);
+
 }
 
 // user is loged in
 function logedIn() {
   startWebSocket();
   disaplyContent();
-  getUserInfo();
-  setScreen(2);
+  displayUserJobs();
 }
 
 function storeUserData(data) {
@@ -138,7 +137,7 @@ function oauthSignIn() {
     access_type: "offline",
     prompt: "consent", // remove long term
     scope:
-      "https://www.googleapis.com/auth/photoslibrary https://www.googleapis.com/auth/photospicker.mediaitems.readonly",
+      "https://www.googleapis.com/auth/photoslibrary.appendonly https://www.googleapis.com/auth/photospicker.mediaitems.readonly",
     include_granted_scopes: "true",
     state: "pass-through value",
   };
@@ -326,27 +325,6 @@ function startCompression() {
     });
 }
 
-function getUserInfo() {
-  fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-    },
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      return response.json();
-    })
-    .then((data) => {
-      console.log("User info:", data);
-      storeUserData(data);
-    })
-    .catch((error) => {
-      console.error("Error fetching user info:", error);
-    });
-}
-
 function requestNotification() {
   if (!("Notification" in window)) {
     // Check if the browser supports notifications
@@ -452,5 +430,109 @@ function setScreen(nb) {
 }
 
 function start() {
-  setScreen(1)
+  if (localStorage.getItem("access_token")) {
+    setScreen(2)
+  } else {
+    setScreen(1)
+  }
+}
+
+function displayUserJobs() {
+  fetch(api + "/job", {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => response.json())
+    .then((jobs) => {
+      const jobsList = document.querySelector("#jobs ul");
+      jobsList.innerHTML = ""; // clear existing jobs
+
+      jobs.forEach((job) => {
+        const template = document.querySelector("#media-item-template");
+        const jobItem = template.content.cloneNode(true);
+
+        const timeSpan = jobItem.querySelector(".time");
+        const time = formatTimeElapsed(job.timestamp);
+        timeSpan.textContent = time;
+
+        const sizeSpan = jobItem.querySelector(".size");
+        const sizeSaved = formatFileSize(job.old_size - job.new_size);
+        sizeSpan.textContent = sizeSaved;
+
+         const img = jobItem.querySelector("img");
+        if (job.nb_media === job.nb_media_done) {
+          img.src = "/done.svg";
+        } else {
+          img.src = "/not-done.svg";
+        }
+
+        jobsList.appendChild(jobItem);
+      });
+    })
+    .catch((error) => console.error("Error fetching jobs:", error));
+}
+
+function formatTimeElapsed(unixTime) {
+  // Convert to milliseconds if it's in seconds (Unix timestamps less than 2^40)
+  // This handles both millisecond and second formats
+  if (unixTime < 2**40) {
+    unixTime *= 1000;
+  }
+  
+  const now = Date.now();
+  const diffMs = now - unixTime;
+  
+  // Convert to various time units
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  const months = Math.floor(days / 30);
+  const years = Math.floor(days / 365);
+  
+  // Return the most appropriate time format
+  if (years > 0) {
+    return `${years} ${years === 1 ? 'year' : 'years'}`;
+  } else if (months > 0) {
+    return `${months} ${months === 1 ? 'month' : 'months'}`;
+  } else if (days > 0) {
+    return `${days} ${days === 1 ? 'day' : 'days'}`;
+  } else if (hours > 0) {
+    return `${hours}h`;
+  } else if (minutes > 0) {
+    return `${minutes}min`;
+  } else {
+    return `${seconds}s`;
+  }
+}
+
+function formatFileSize(bytes) {
+  // Handle invalid input
+  if (bytes === null || bytes === undefined || isNaN(bytes) || bytes < 0) {
+    return "0 B";
+  }
+  
+  // Array of units from bytes to petabytes
+  const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+  
+  // Base for conversion (1024 for binary/IEC, 1000 for decimal/SI)
+  const base = 1024;
+  
+  // If it's 0 bytes, return immediately
+  if (bytes === 0) return `0 ${units[0]}`;
+  
+  // Calculate the appropriate unit index by taking the log of the file size
+  const unitIndex = Math.floor(Math.log(bytes) / Math.log(base));
+  
+  // Make sure we don't exceed the available units
+  const safeUnitIndex = Math.min(unitIndex, units.length - 1);
+  
+  // Calculate the size in the determined unit and round to integer
+  const size = Math.floor(bytes / Math.pow(base, safeUnitIndex));
+  
+  // Return the formatted string
+  return `${size} ${units[safeUnitIndex]}`;
 }

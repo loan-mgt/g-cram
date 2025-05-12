@@ -44,4 +44,4 @@ SELECT COUNT(*) FROM media WHERE user_id = ? and timestamp = ? and step >= ?;
 SELECT SUM(new_size) as sum_new_size, SUM(old_size) as sum_old_size FROM media WHERE user_id = ? and timestamp = ?;
 
 -- name: GetUserJob :many
-SELECT COUNT(*) as nb_media, COUNT(done) as nb_media_done, timestamp, SUM(old_size) as old_size, SUM(new_size) as new_size FROM media WHERE user_id = ? GROUP BY timestamp ORDER BY timestamp DESC LIMIT 5;
+SELECT COUNT(*) as nb_media, SUM(done) as nb_media_done, timestamp, SUM(old_size) as old_size, SUM(new_size) as new_size FROM media WHERE user_id = ? GROUP BY timestamp ORDER BY timestamp DESC LIMIT 5;

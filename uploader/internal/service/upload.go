@@ -25,6 +25,7 @@ type AlbumPosition struct {
 }
 
 func UploadVideo(token string, videoPath string, fileName string) error {
+	fmt.Println("new upload video")
 	file, err := os.Open(videoPath)
 	if err != nil {
 		return err
@@ -96,6 +97,8 @@ func UploadVideo(token string, videoPath string, fileName string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		fmt.Println(string(bodyBytes))
 		return fmt.Errorf("status code: %d, response: %s", resp.StatusCode, resp.Status)
 	}
 
