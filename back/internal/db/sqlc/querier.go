@@ -23,6 +23,7 @@ type Querier interface {
 	GetMedias(ctx context.Context, userID string) ([]Medium, error)
 	GetUser(ctx context.Context, id string) (User, error)
 	GetUserByTokenHash(ctx context.Context, tokenHash sql.NullString) (User, error)
+	GetUserJob(ctx context.Context, userID string) ([]GetUserJobRow, error)
 	GetUserJobDetails(ctx context.Context, userID string) ([]GetUserJobDetailsRow, error)
 	RemoveMedia(ctx context.Context, mediaID string) error
 	SetMediaDone(ctx context.Context, arg SetMediaDoneParams) error

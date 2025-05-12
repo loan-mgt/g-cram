@@ -63,6 +63,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getUserByTokenHashStmt, err = db.PrepareContext(ctx, getUserByTokenHash); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserByTokenHash: %w", err)
 	}
+	if q.getUserJobStmt, err = db.PrepareContext(ctx, getUserJob); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUserJob: %w", err)
+	}
 	if q.getUserJobDetailsStmt, err = db.PrepareContext(ctx, getUserJobDetails); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserJobDetails: %w", err)
 	}
@@ -158,6 +161,11 @@ func (q *Queries) Close() error {
 	if q.getUserByTokenHashStmt != nil {
 		if cerr := q.getUserByTokenHashStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getUserByTokenHashStmt: %w", cerr)
+		}
+	}
+	if q.getUserJobStmt != nil {
+		if cerr := q.getUserJobStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUserJobStmt: %w", cerr)
 		}
 	}
 	if q.getUserJobDetailsStmt != nil {
@@ -257,6 +265,7 @@ type Queries struct {
 	getMediasStmt                 *sql.Stmt
 	getUserStmt                   *sql.Stmt
 	getUserByTokenHashStmt        *sql.Stmt
+	getUserJobStmt                *sql.Stmt
 	getUserJobDetailsStmt         *sql.Stmt
 	removeMediaStmt               *sql.Stmt
 	setMediaDoneStmt              *sql.Stmt
@@ -285,6 +294,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getMediasStmt:                 q.getMediasStmt,
 		getUserStmt:                   q.getUserStmt,
 		getUserByTokenHashStmt:        q.getUserByTokenHashStmt,
+		getUserJobStmt:                q.getUserJobStmt,
 		getUserJobDetailsStmt:         q.getUserJobDetailsStmt,
 		removeMediaStmt:               q.removeMediaStmt,
 		setMediaDoneStmt:              q.setMediaDoneStmt,

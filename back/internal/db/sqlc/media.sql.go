@@ -197,6 +197,47 @@ func (q *Queries) GetMedias(ctx context.Context, userID string) ([]Medium, error
 	return items, nil
 }
 
+const getUserJob = `-- name: GetUserJob :many
+SELECT COUNT(*) as nb_media, COUNT(done) as nb_media_done, timestamp, SUM(old_size) as old_size, SUM(new_size) as new_size FROM media WHERE user_id = ? GROUP BY timestamp ORDER BY timestamp DESC LIMIT 5
+`
+
+type GetUserJobRow struct {
+	NbMedia     int64           `json:"nb_media"`
+	NbMediaDone int64           `json:"nb_media_done"`
+	Timestamp   int64           `json:"timestamp"`
+	OldSize     sql.NullFloat64 `json:"old_size"`
+	NewSize     sql.NullFloat64 `json:"new_size"`
+}
+
+func (q *Queries) GetUserJob(ctx context.Context, userID string) ([]GetUserJobRow, error) {
+	rows, err := q.query(ctx, q.getUserJobStmt, getUserJob, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserJobRow
+	for rows.Next() {
+		var i GetUserJobRow
+		if err := rows.Scan(
+			&i.NbMedia,
+			&i.NbMediaDone,
+			&i.Timestamp,
+			&i.OldSize,
+			&i.NewSize,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const removeMedia = `-- name: RemoveMedia :exec
 DELETE FROM media WHERE media_id = ?
 `
