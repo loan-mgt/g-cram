@@ -415,8 +415,14 @@ function logout() {
 }
 
 
-function setScreen(nb) {
+function setScreen(nb, load = false) {
   let screens = document.querySelectorAll('main');
+
+
+  if (load){
+    displayUserJobs();
+  }
+
 
   screens.forEach((screen) => {
     if (screen.id === `screen-${nb}`) {
